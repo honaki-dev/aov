@@ -16,7 +16,6 @@
     };
     const playerUrl = document.getElementById("playerUrl");
     const pasteBtn = document.getElementById("pasteBtn");
-    const linkStatusEl = document.getElementById("linkStatus");
     const statusLine = document.getElementById("statusLine");
     const modalOverlay = document.getElementById("modalOverlay");
     const modalBox = document.getElementById("modalBox");
@@ -26,10 +25,19 @@
     const modalCloseBtn = document.getElementById("modalCloseBtn");
     const modalCloseX = document.getElementById("modalCloseX");
     const hiddenCanvas = document.getElementById("hiddenCanvas");
+    const userInfoEl = document.getElementById("userInfo");
+    const playerImageEl = document.getElementById("playerImage");
+    const playerRankEl = document.getElementById("playerRank");
+    const playerRankTextEl = document.getElementById("playerRankText");
+    const playerNameEl = document.getElementById("playerName");
     let isProcessing = false;
     let modalPreviewObjectUrl = null;
+    let currentFetchController = null;
+    let isValidLink = false;
+    let userInfoData = null;
+    let linkError = null;
 
-    // 7 tham số bắt buộc để tạo globalHeaders phía worker
+    // 7 tham số bắt buộc
     const REQUIRED_PARAMS = [
         { key: "partition", label: "partition" },
         { key: "channelid", label: "channelid" },
@@ -40,76 +48,234 @@
         { key: "aov_region", label: "aov_region" },
     ];
 
-    // Cho phép người dùng dán nguyên cả đoạn text/lỗi trình duyệt,
-    // tự tìm URL http(s) nằm bên trong.
+    // Cache
+    const cache = new Map();
+    const CACHE_DURATION = 5 * 60 * 1000;
+
+    // Debounce
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Kiểm tra link có đủ tham số không
+    function validateLinkParams(url) {
+        try {
+            const parsed = new URL(url);
+            const missing = REQUIRED_PARAMS.filter(
+                ({ key }) => !parsed.searchParams.get(key),
+            );
+            return {
+                valid: missing.length === 0,
+                missing: missing,
+                missingCount: missing.length,
+            };
+        } catch {
+            return {
+                valid: false,
+                missing: [],
+                missingCount: 0,
+            };
+        }
+    }
+
     function extractUrlFromText(text) {
         if (!text) return null;
         const match = text.match(/https?:\/\/[^\s"'<>]+/);
         return match ? match[0] : null;
     }
 
-    function renderLinkStatus(rawValue) {
-        linkStatusEl.innerHTML = "";
-        const raw = (rawValue || "").trim();
-        if (!raw) return;
-
-        const url = extractUrlFromText(raw);
-        if (!url) {
-            const msg = document.createElement("div");
-            msg.className = "link-status-msg err";
-            msg.textContent =
-                "Không tìm thấy link hợp lệ trong nội dung đã dán.";
-            linkStatusEl.appendChild(msg);
-            return;
-        }
-
-        let parsed;
-        try {
-            parsed = new URL(url);
-        } catch {
-            const msg = document.createElement("div");
-            msg.className = "link-status-msg err";
-            msg.textContent = "Link không đúng định dạng URL.";
-            linkStatusEl.appendChild(msg);
-            return;
-        }
-
-        const params = parsed.searchParams;
-        let missing = 0;
-        REQUIRED_PARAMS.forEach(({ key, label }) => {
-            const has = !!params.get(key);
-            if (!has) missing++;
-            const chip = document.createElement("span");
-            chip.className = "link-chip " + (has ? "ok" : "missing");
-            const dot = document.createElement("span");
-            dot.className = "dot";
-            chip.appendChild(dot);
-            chip.appendChild(document.createTextNode(label));
-            linkStatusEl.appendChild(chip);
-        });
-
-        const msg = document.createElement("div");
-        msg.className = "link-status-msg " + (missing === 0 ? "ok" : "err");
-        msg.textContent =
-            missing === 0
-                ? "Link hợp lệ"
-                : `Thiếu ${missing} tham số, hãy lấy lại link mới`;
-        linkStatusEl.appendChild(msg);
+    function setStatus(msg, type) {
+        statusLine.textContent = msg;
+        statusLine.className = "status-line show" + (type ? " " + type : "");
     }
 
-    playerUrl.addEventListener("input", () =>
-        renderLinkStatus(playerUrl.value),
-    );
+    function clearStatus() {
+        statusLine.textContent = "";
+        statusLine.className = "status-line";
+    }
+
+    function updateSubmitButton() {
+        const hasValidLink = isValidLink && userInfoData !== null;
+        const hasImage = cropImg.style.display !== "none";
+        submitBtn.disabled = !(hasValidLink && hasImage && !isProcessing);
+
+        if (!hasValidLink) {
+            submitBtn.title = "Link chưa hợp lệ hoặc chưa tải thông tin";
+        } else if (!hasImage) {
+            submitBtn.title = "Chưa chọn ảnh";
+        } else {
+            submitBtn.title = "Đổi ảnh poster";
+        }
+    }
+
+    async function fetchUserInfo(url) {
+        const cached = cache.get(url);
+        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+            return cached.data;
+        }
+
+        if (currentFetchController) {
+            currentFetchController.abort();
+        }
+        currentFetchController = new AbortController();
+
+        try {
+            const response = await fetch(
+                `${apiEndpoint.value}/api/getUserInfo`,
+                {
+                    method: "POST",
+                    headers: {
+                        "content-type": "application/json",
+                    },
+                    body: JSON.stringify({ url }),
+                    signal: currentFetchController.signal,
+                },
+            );
+            const result = await response.json();
+
+            if (result.ok && result.data) {
+                cache.set(url, {
+                    data: result.data,
+                    timestamp: Date.now(),
+                });
+                return result.data;
+            }
+            return null;
+        } catch (error) {
+            if (error.name === "AbortError") {
+                console.log("Fetch cancelled");
+                return null;
+            }
+            throw error;
+        } finally {
+            currentFetchController = null;
+        }
+    }
+
+    async function renderLinkStatus(rawValue) {
+        const url = (rawValue || "").trim();
+
+        // Reset trạng thái link
+        isValidLink = false;
+        userInfoData = null;
+        userInfoEl.classList.add("hidden");
+        linkError = null;
+
+        if (!url) {
+            if (!hasImage) {
+                clearStatus();
+            }
+            updateSubmitButton();
+            return;
+        }
+
+        // Validate URL format
+        try {
+            new URL(url);
+        } catch {
+            linkError = "Link không hợp lệ";
+            setStatus(linkError, "error");
+            updateSubmitButton();
+            return;
+        }
+
+        // Kiểm tra tham số
+        const paramCheck = validateLinkParams(url);
+        if (!paramCheck.valid) {
+            linkError = `Link thiếu ${paramCheck.missingCount} tham số (${paramCheck.missing.map((m) => m.label).join(", ")})`;
+            setStatus(linkError, "error");
+            updateSubmitButton();
+            return;
+        }
+
+        setStatus("Đang tải thông tin...");
+
+        try {
+            const data = await fetchUserInfo(url);
+
+            if (data) {
+                isValidLink = true;
+                userInfoData = data;
+                userInfoEl.classList.remove("hidden");
+                playerImageEl.src = data.avatarUrl;
+                playerRankEl.src = data.rank.imageUrl;
+                playerNameEl.textContent = data.playerName;
+                playerRankTextEl.textContent =
+                    data.rank.text + " " + data.rank.star + " ⭐";
+                clearStatus();
+            } else {
+                linkError =
+                    "Không tìm thấy thông tin người chơi, hãy vào game và lấy lại link";
+                setStatus(linkError, "error");
+            }
+        } catch (error) {
+            if (error.name !== "AbortError") {
+                linkError = "Lỗi kết nối đến server";
+                setStatus(linkError, "error");
+                console.error("Fetch error:", error);
+            }
+        } finally {
+            updateSubmitButton();
+        }
+    }
+
+    const debouncedRenderLinkStatus = debounce(renderLinkStatus, 500);
+
+    // Event listeners
+    playerUrl.addEventListener("input", () => {
+        const url = playerUrl.value.trim();
+
+        isValidLink = false;
+        userInfoData = null;
+        userInfoEl.classList.add("hidden");
+        linkError = null;
+
+        if (!hasImage) {
+            clearStatus();
+        }
+        updateSubmitButton();
+
+        if (url) {
+            debouncedRenderLinkStatus(url);
+        }
+    });
+
     playerUrl.addEventListener("paste", () => {
-        // đợi nội dung paste được chèn xong rồi mới xử lý
+        isValidLink = false;
+        userInfoData = null;
+        userInfoEl.classList.add("hidden");
+        linkError = null;
+
+        if (!hasImage) {
+            clearStatus();
+        }
+        updateSubmitButton();
+
         setTimeout(() => {
             const extracted = extractUrlFromText(playerUrl.value);
-            if (extracted) playerUrl.value = extracted; // tự dọn, chỉ giữ lại link
-            renderLinkStatus(playerUrl.value);
+            if (extracted) {
+                playerUrl.value = extracted;
+                debouncedRenderLinkStatus(extracted);
+            } else {
+                isValidLink = false;
+                userInfoData = null;
+                userInfoEl.classList.add("hidden");
+                if (!hasImage) {
+                    clearStatus();
+                }
+                updateSubmitButton();
+            }
         }, 0);
     });
 
-    // --- nút Dán (đọc clipboard) ---
     pasteBtn.addEventListener("click", async () => {
         if (isProcessing) return;
         try {
@@ -119,11 +285,21 @@
             const text = await navigator.clipboard.readText();
             const extracted = extractUrlFromText(text) || text.trim();
             if (!extracted) throw new Error("empty");
+
+            isValidLink = false;
+            userInfoData = null;
+            userInfoEl.classList.add("hidden");
+            linkError = null;
+
+            if (!hasImage) {
+                clearStatus();
+            }
+            updateSubmitButton();
+
             playerUrl.value = extracted;
-            renderLinkStatus(playerUrl.value);
+            debouncedRenderLinkStatus(extracted);
             playerUrl.focus();
         } catch (err) {
-            // Fallback khi trình duyệt chặn quyền đọc clipboard hoặc không hỗ trợ
             showModal(
                 "Không thể tự dán (trình duyệt chặn quyền truy cập clipboard). Hãy nhấn giữ vào ô Link rồi chọn Dán, hoặc bấm Ctrl+V.",
                 "error",
@@ -145,6 +321,7 @@
         }
         modalOverlay.classList.add("show");
     }
+
     function closeModal() {
         modalOverlay.classList.remove("show");
         if (modalPreviewObjectUrl) {
@@ -152,6 +329,7 @@
             modalPreviewObjectUrl = null;
         }
     }
+
     modalCloseBtn.addEventListener("click", closeModal);
     modalCloseX.addEventListener("click", closeModal);
     modalOverlay.addEventListener("click", (e) => {
@@ -162,14 +340,15 @@
             closeModal();
         }
     });
+
     let img = new Image();
     let naturalW = 0,
         naturalH = 0;
-    let baseScale = 1; // scale so image covers the container at zoom=1
-    let scale = 1; // baseScale * zoomFactor
+    let baseScale = 1;
+    let scale = 1;
     let zoomFactor = 1;
     let tx = 0,
-        ty = 0; // top-left position of image within container (px)
+        ty = 0;
     let containerW = 0,
         containerH = 0;
     let dragging = false;
@@ -178,19 +357,9 @@
     let hasImage = false;
     let currentFileName = "image.jpg";
 
-    function setStatus(msg, type) {
-        statusLine.textContent = msg;
-        statusLine.className = "status-line show" + (type ? " " + type : "");
-    }
-    function clearStatus() {
-        statusLine.textContent = "";
-        statusLine.className = "status-line";
-    }
-
     function setProcessing(state) {
         isProcessing = state;
-        submitBtn.disabled = state || !hasImage;
-        resetBtn.disabled = state;
+        updateSubmitButton();
         zoomSlider.disabled = state || !hasImage;
         dropzone.classList.toggle("disabled", state);
         cropStage.classList.toggle("disabled", state);
@@ -238,7 +407,6 @@
             baseScale = Math.max(containerW / naturalW, containerH / naturalH);
             zoomFactor = 1;
             scale = baseScale;
-            // center the image
             tx = (containerW - naturalW * scale) / 2;
             ty = (containerH - naturalH * scale) / 2;
             clampPosition();
@@ -246,14 +414,13 @@
 
             zoomSlider.value = 1;
             zoomSlider.disabled = false;
-            submitBtn.disabled = false;
             hasImage = true;
-            clearStatus();
+            updateSubmitButton();
         };
         img.src = url;
     }
 
-    // --- file input / dropzone ---
+    // file input / dropzone
     dropzone.addEventListener("click", () => {
         if (isProcessing) return;
         fileInput.click();
@@ -281,26 +448,24 @@
             loadImageFile(e.dataTransfer.files[0]);
     });
 
-    // --- zoom ---
+    // zoom
     zoomSlider.addEventListener("input", () => {
         if (!hasImage || isProcessing) return;
         const cx = containerW / 2,
             cy = containerH / 2;
-        // image-space point currently at container center, before zoom change
         const imgX = (cx - tx) / scale;
         const imgY = (cy - ty) / scale;
 
         zoomFactor = parseFloat(zoomSlider.value);
         scale = baseScale * zoomFactor;
 
-        // keep the same image point centered after zoom
         tx = cx - imgX * scale;
         ty = cy - imgY * scale;
         clampPosition();
         applyTransform();
     });
 
-    // --- drag (mouse + touch) ---
+    // drag
     function startDrag(x, y) {
         if (!hasImage || isProcessing) return;
         dragging = true;
@@ -355,7 +520,7 @@
         applyTransform();
     });
 
-    // --- reset ---
+    // reset
     resetBtn.addEventListener("click", () => {
         hasImage = false;
         cropImg.style.display = "none";
@@ -363,12 +528,12 @@
         emptyState.style.display = "flex";
         zoomSlider.value = 1;
         zoomSlider.disabled = true;
-        submitBtn.disabled = true;
         fileInput.value = "";
         clearStatus();
+        updateSubmitButton();
     });
 
-    // --- produce final cropped blob at 320x504 ---
+    // getCroppedBlob
     function getCroppedBlob() {
         return new Promise((resolve, reject) => {
             const ctx = hiddenCanvas.getContext("2d");
@@ -396,8 +561,13 @@
         });
     }
 
-    // --- submit ---
+    // submit
     submitBtn.addEventListener("click", async () => {
+        if (submitBtn.disabled) {
+            showModal("Vui lòng kiểm tra lại link và ảnh.", "error");
+            return;
+        }
+
         clearStatus();
         const endpoint = apiEndpoint.value.trim();
         const purl = extractUrlFromText(playerUrl.value);
@@ -407,27 +577,7 @@
             return;
         }
         if (!purl) {
-            showModal(
-                "Không tìm thấy link hợp lệ - dán lại link từ trình duyệt.",
-                "error",
-            );
-            return;
-        }
-        try {
-            const parsed = new URL(purl);
-            const missing = REQUIRED_PARAMS.filter(
-                ({ key }) => !parsed.searchParams.get(key),
-            );
-            if (missing.length > 0) {
-                showModal(
-                    `Link thiếu ${missing.length} tham số (${missing
-                        .map((m) => m.label)
-                        .join(", ")}) - poster có thể lỗi.`,
-                    "error",
-                );
-            }
-        } catch {
-            showModal("Link không đúng định dạng URL.", "error");
+            showModal("Không tìm thấy link hợp lệ.", "error");
             return;
         }
         if (!hasImage) {
@@ -478,6 +628,12 @@
                         "Link đã sai hoặc hết hạn - vui lòng lấy link mới.",
                         "error",
                     );
+                    isValidLink = false;
+                    userInfoData = null;
+                    userInfoEl.classList.add("hidden");
+                    linkError = "Link đã hết hạn";
+                    setStatus(linkError, "error");
+                    updateSubmitButton();
                 } else if (
                     /pic\s*invalid/i.test(errMsg) ||
                     resultBlob.includes("pic invalid")
@@ -500,4 +656,7 @@
             setProcessing(false);
         }
     });
+
+    // Khởi tạo trạng thái ban đầu
+    updateSubmitButton();
 })();

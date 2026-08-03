@@ -99,7 +99,28 @@
                             rows="3"
                             placeholder="https://kgvn-camp.mobagarena.com/app/player-poster?..."
                         ></textarea>
-                        <div class="link-status" id="linkStatus"></div>
+
+                        <div class="user-info hidden" id="userInfo">
+                            <img
+                                alt="Player Image"
+                                id="playerImage"
+                                class="player-image"
+                            />
+                            <div style="flex: 1">
+                                <p class="player-name" id="playerName"></p>
+                                <div class="player-rank-wrap">
+                                    <img
+                                        alt="Player Rank"
+                                        id="playerRank"
+                                        class="player-rank"
+                                    />
+                                    <p
+                                        class="player-rank-text"
+                                        id="playerRankText"
+                                    ></p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="field">
@@ -125,7 +146,11 @@
                         Đổi Poster Ngay
                     </button>
                     <div style="height: 10px"></div>
-                    <button class="btn-ghost" id="resetBtn" style="width: 100%">
+                    <button
+                        class="btn-ghost hidden"
+                        id="resetBtn"
+                        style="width: 100%"
+                    >
                         Chọn Ảnh Khác
                     </button>
                 </div>
