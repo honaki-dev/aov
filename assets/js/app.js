@@ -104,7 +104,6 @@
 
     function updateSubmitButton() {
         const hasValidLink = isValidLink && userInfoData !== null;
-        const hasImage = cropImg.style.display !== "none";
         submitBtn.disabled = !(hasValidLink && hasImage && !isProcessing);
 
         if (!hasValidLink) {
@@ -198,30 +197,44 @@
 
         setStatus("Đang tải thông tin...");
 
+        let data;
         try {
-            const data = await fetchUserInfo(url);
-
-            if (data) {
-                isValidLink = true;
-                userInfoData = data;
-                userInfoEl.classList.remove("hidden");
-                playerImageEl.src = data.avatarUrl;
-                playerRankEl.src = data.rank.imageUrl;
-                playerNameEl.textContent = data.playerName;
-                playerRankTextEl.textContent =
-                    data.rank.text + " " + data.rank.star + " ⭐";
-                clearStatus();
-            } else {
-                linkError =
-                    "Không tìm thấy thông tin người chơi, hãy vào game và lấy lại link";
-                setStatus(linkError, "error");
-            }
+            data = await fetchUserInfo(url);
         } catch (error) {
             if (error.name !== "AbortError") {
                 linkError = "Lỗi kết nối đến server";
                 setStatus(linkError, "error");
                 console.error("Fetch error:", error);
             }
+            updateSubmitButton();
+            return;
+        }
+
+        if (!data) {
+            linkError =
+                "Không tìm thấy thông tin người chơi, hãy vào game và lấy lại link";
+            setStatus(linkError, "error");
+            updateSubmitButton();
+            return;
+        }
+
+        try {
+            isValidLink = true;
+            userInfoData = data;
+            userInfoEl.classList.remove("hidden");
+            playerImageEl.src = data.avatarUrl;
+            playerRankEl.src = data.rank.imageUrl;
+            playerNameEl.textContent = data.playerName;
+            playerRankTextEl.textContent =
+                data.rank.text + " " + data.rank.star + " ⭐";
+            clearStatus();
+        } catch (error) {
+            isValidLink = false;
+            userInfoData = null;
+            userInfoEl.classList.add("hidden");
+            linkError = "Dữ liệu người chơi trả về không hợp lệ";
+            setStatus(linkError, "error");
+            console.error("Render user info error:", error);
         } finally {
             updateSubmitButton();
         }
@@ -356,11 +369,15 @@
         lastY = 0;
     let hasImage = false;
     let currentFileName = "image.jpg";
+    let currentBlobUrl = null;
 
     function setProcessing(state) {
         isProcessing = state;
         updateSubmitButton();
         zoomSlider.disabled = state || !hasImage;
+        resetBtn.disabled = state;
+        pasteBtn.disabled = state;
+        playerUrl.disabled = state;
         dropzone.classList.toggle("disabled", state);
         cropStage.classList.toggle("disabled", state);
     }
@@ -392,7 +409,14 @@
         if (isProcessing) return;
         if (!file || !file.type.startsWith("image/")) return;
         currentFileName = file.name || "image.jpg";
+
+        // giải phóng blob URL của ảnh trước đó (nếu có) để tránh rò bộ nhớ
+        if (currentBlobUrl) {
+            URL.revokeObjectURL(currentBlobUrl);
+        }
         const url = URL.createObjectURL(file);
+        currentBlobUrl = url;
+
         img = new Image();
         img.onload = function () {
             naturalW = img.naturalWidth;
@@ -415,6 +439,7 @@
             zoomSlider.value = 1;
             zoomSlider.disabled = false;
             hasImage = true;
+            resetBtn.classList.remove("hidden");
             updateSubmitButton();
         };
         img.src = url;
@@ -423,6 +448,7 @@
     // file input / dropzone
     dropzone.addEventListener("click", () => {
         if (isProcessing) return;
+        fileInput.value = "";
         fileInput.click();
     });
     fileInput.addEventListener("change", (e) => {
@@ -522,13 +548,19 @@
 
     // reset
     resetBtn.addEventListener("click", () => {
+        if (isProcessing) return;
         hasImage = false;
         cropImg.style.display = "none";
+        if (currentBlobUrl) {
+            URL.revokeObjectURL(currentBlobUrl);
+            currentBlobUrl = null;
+        }
         cropImg.src = "";
         emptyState.style.display = "flex";
         zoomSlider.value = 1;
         zoomSlider.disabled = true;
         fileInput.value = "";
+        resetBtn.classList.add("hidden");
         clearStatus();
         updateSubmitButton();
     });

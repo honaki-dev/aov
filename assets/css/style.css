@@ -120,6 +120,14 @@ body {
     padding: 4px 10px;
     border-radius: 100px;
 }
+.paste-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.field textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 .paste-btn:hover {
     border-color: var(--accent);
 }
