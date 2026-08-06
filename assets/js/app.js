@@ -3,6 +3,9 @@
         OUT_H = 1701;
     const MAX_HAR_FILE_SIZE = 30 * 1024 * 1024; // 30MB
 
+    const apiEndpoint = {
+        value: "https://api.honaki.site",
+    };
     const dropzone = document.getElementById("dropzone");
     const fileInput = document.getElementById("fileInput");
     const cropContainer = document.getElementById("cropContainer");
@@ -12,9 +15,6 @@
     const zoomSlider = document.getElementById("zoomSlider");
     const submitBtn = document.getElementById("submitBtn");
     const resetBtn = document.getElementById("resetBtn");
-    const apiEndpoint = {
-        value: "https://api.honaki.site",
-    };
     const playerUrl = document.getElementById("playerUrl");
     const pasteBtn = document.getElementById("pasteBtn");
     const modeLinkBtn = document.getElementById("modeLinkBtn");
@@ -42,17 +42,17 @@
     const playerRankEl = document.getElementById("playerRank");
     const playerRankTextEl = document.getElementById("playerRankText");
     const playerNameEl = document.getElementById("playerName");
+
     let isProcessing = false;
     let modalPreviewObjectUrl = null;
     let currentFetchController = null;
     let isValidLink = false;
     let userInfoData = null;
     let linkError = null;
-    let inputMode = "link"; // "link" | "har" - mặc định dùng link
-    let harFile = null; // File .har đang chọn (mode "har")
-    let shareEnabled = false; // mặc định: chỉ lưu, không chia sẻ công khai
+    let inputMode = "link"; // "link" | "har"
+    let harFile = null;
+    let shareEnabled = false;
 
-    // 7 tham số bắt buộc
     const REQUIRED_PARAMS = [
         { key: "partition", label: "partition" },
         { key: "channelid", label: "channelid" },
@@ -63,11 +63,9 @@
         { key: "aov_region", label: "aov_region" },
     ];
 
-    // Cache
     const cache = new Map();
     const CACHE_DURATION = 5 * 60 * 1000;
 
-    // Debounce
     function debounce(func, wait) {
         let timeout;
         return function executedFunction(...args) {
@@ -80,7 +78,6 @@
         };
     }
 
-    // Kiểm tra link có đủ tham số không
     function validateLinkParams(url) {
         try {
             const parsed = new URL(url);
@@ -130,8 +127,6 @@
         }
     }
 
-    // cacheKey: string (mode "link") hoặc File (mode "har")
-    // requestInit: { method: "json", body } hoặc { method: "form", form }
     async function fetchUserInfoRaw(cacheKey, buildRequest) {
         const cached = cache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -144,14 +139,12 @@
         currentFetchController = new AbortController();
 
         try {
-            const response = await fetch(
-                `${apiEndpoint.value}/api/getUserInfo`,
-                {
-                    ...buildRequest(),
-                    method: "POST",
-                    signal: currentFetchController.signal,
-                },
-            );
+            const baseUrl = apiEndpoint.value.trim().replace(/\/+$/, "");
+            const response = await fetch(`${baseUrl}/api/getUserInfo`, {
+                ...buildRequest(),
+                method: "POST",
+                signal: currentFetchController.signal,
+            });
             const result = await response.json();
 
             if (result.ok && result.data) {
@@ -181,7 +174,6 @@
     }
 
     function fetchUserInfoByHar(file) {
-        // key theo tên + kích thước + lastModified để cache đúng file
         const cacheKey = `har:${file.name}:${file.size}:${file.lastModified}`;
         return fetchUserInfoRaw(cacheKey, () => {
             const form = new FormData();
@@ -193,21 +185,17 @@
     async function renderLinkStatus(rawValue) {
         const url = (rawValue || "").trim();
 
-        // Reset trạng thái link
         isValidLink = false;
         userInfoData = null;
         userInfoEl.classList.add("hidden");
         linkError = null;
 
         if (!url) {
-            if (!hasImage) {
-                clearStatus();
-            }
+            if (!hasImage) clearStatus();
             updateSubmitButton();
             return;
         }
 
-        // Validate URL format
         try {
             new URL(url);
         } catch {
@@ -217,7 +205,6 @@
             return;
         }
 
-        // Kiểm tra tham số
         const paramCheck = validateLinkParams(url);
         if (!paramCheck.valid) {
             linkError = `Link thiếu ${paramCheck.missingCount} tham số (${paramCheck.missing.map((m) => m.label).join(", ")})`;
@@ -375,12 +362,12 @@
     shareOptionOff.addEventListener("click", () => setShare(false));
     shareOptionOn.addEventListener("click", () => setShare(true));
 
-    // har dropzone / file input
     harDropzone.addEventListener("click", () => {
         if (isProcessing) return;
         harFileInput.value = "";
         harFileInput.click();
     });
+
     function setHarFile(file) {
         if (file.size > MAX_HAR_FILE_SIZE) {
             showModal(
@@ -402,6 +389,7 @@
         if (!file) return;
         setHarFile(file);
     });
+
     ["dragenter", "dragover"].forEach((evt) => {
         harDropzone.addEventListener(evt, (e) => {
             e.preventDefault();
@@ -409,12 +397,14 @@
             harDropzone.classList.add("drag");
         });
     });
+
     ["dragleave", "drop"].forEach((evt) => {
         harDropzone.addEventListener(evt, (e) => {
             e.preventDefault();
             harDropzone.classList.remove("drag");
         });
     });
+
     harDropzone.addEventListener("drop", (e) => {
         if (isProcessing) return;
         const file = e.dataTransfer.files && e.dataTransfer.files[0];
@@ -422,7 +412,6 @@
         setHarFile(file);
     });
 
-    // Event listeners
     playerUrl.addEventListener("input", () => {
         const url = playerUrl.value.trim();
 
@@ -431,9 +420,7 @@
         userInfoEl.classList.add("hidden");
         linkError = null;
 
-        if (!hasImage) {
-            clearStatus();
-        }
+        if (!hasImage) clearStatus();
         updateSubmitButton();
 
         if (url) {
@@ -447,9 +434,7 @@
         userInfoEl.classList.add("hidden");
         linkError = null;
 
-        if (!hasImage) {
-            clearStatus();
-        }
+        if (!hasImage) clearStatus();
         updateSubmitButton();
 
         setTimeout(() => {
@@ -461,14 +446,13 @@
                 isValidLink = false;
                 userInfoData = null;
                 userInfoEl.classList.add("hidden");
-                if (!hasImage) {
-                    clearStatus();
-                }
+                if (!hasImage) clearStatus();
                 updateSubmitButton();
             }
         }, 0);
     });
 
+    // SỬA BUG 4: Tách biệt thông báo khi Clipboard rỗng và lỗi cấp quyền
     pasteBtn.addEventListener("click", async () => {
         if (isProcessing) return;
         try {
@@ -476,17 +460,19 @@
                 throw new Error("unsupported");
             }
             const text = await navigator.clipboard.readText();
+            if (!text || !text.trim()) {
+                showModal("Bộ nhớ tạm (Clipboard) đang rỗng.", "error");
+                return;
+            }
+
             const extracted = extractUrlFromText(text) || text.trim();
-            if (!extracted) throw new Error("empty");
 
             isValidLink = false;
             userInfoData = null;
             userInfoEl.classList.add("hidden");
             linkError = null;
 
-            if (!hasImage) {
-                clearStatus();
-            }
+            if (!hasImage) clearStatus();
             updateSubmitButton();
 
             playerUrl.value = extracted;
@@ -590,7 +576,6 @@
         if (!file || !file.type.startsWith("image/")) return;
         currentFileName = file.name || "image.jpg";
 
-        // giải phóng blob URL của ảnh trước đó (nếu có) để tránh rò bộ nhớ
         if (currentBlobUrl) {
             URL.revokeObjectURL(currentBlobUrl);
         }
@@ -601,6 +586,18 @@
         img.onload = function () {
             naturalW = img.naturalWidth;
             naturalH = img.naturalHeight;
+
+            // SỬA BUG 3: Kiểm tra kích thước ảnh hợp lệ để tránh chia cho 0
+            if (!naturalW || !naturalH) {
+                showModal(
+                    "File ảnh không hợp lệ hoặc bị lỗi kích thước.",
+                    "error",
+                );
+                hasImage = false;
+                updateSubmitButton();
+                return;
+            }
+
             cropImg.src = url;
             cropImg.style.width = naturalW + "px";
             cropImg.style.height = naturalH + "px";
@@ -622,10 +619,12 @@
             if (resetBtn) resetBtn.classList.remove("hidden");
             updateSubmitButton();
         };
+        img.onerror = function () {
+            showModal("Không thể đọc định dạng ảnh này.", "error");
+        };
         img.src = url;
     }
 
-    // file input / dropzone
     dropzone.addEventListener("click", () => {
         if (isProcessing) return;
         fileInput.value = "";
@@ -654,7 +653,6 @@
             loadImageFile(e.dataTransfer.files[0]);
     });
 
-    // zoom
     zoomSlider.addEventListener("input", () => {
         if (!hasImage || isProcessing) return;
         const cx = containerW / 2,
@@ -671,7 +669,6 @@
         applyTransform();
     });
 
-    // drag
     function startDrag(x, y) {
         if (!hasImage || isProcessing) return;
         dragging = true;
@@ -726,7 +723,6 @@
         applyTransform();
     });
 
-    // reset
     if (resetBtn) {
         resetBtn.addEventListener("click", () => {
             if (isProcessing) return;
@@ -747,7 +743,6 @@
         });
     }
 
-    // getCroppedBlob
     function getCroppedBlob() {
         return new Promise((resolve, reject) => {
             const ctx = hiddenCanvas.getContext("2d");
@@ -775,7 +770,6 @@
         });
     }
 
-    // submit
     submitBtn.addEventListener("click", async () => {
         if (submitBtn.disabled) {
             showModal("Vui lòng kiểm tra lại link và ảnh.", "error");
@@ -783,11 +777,11 @@
         }
 
         clearStatus();
-        const endpoint = apiEndpoint.value.trim();
+        const endpointRaw = apiEndpoint.value.trim();
         const purl =
             inputMode === "link" ? extractUrlFromText(playerUrl.value) : null;
 
-        if (!endpoint) {
+        if (!endpointRaw) {
             showModal("Thiếu Worker API endpoint.", "error");
             return;
         }
@@ -824,7 +818,12 @@
             form.append("share", String(shareEnabled));
 
             setStatus("Đang đổi...");
-            const resp = await fetch(endpoint, {
+
+            // SỬA BUG 1: Chuẩn hóa URL và thêm endpoint route
+            const baseUrl = endpointRaw.replace(/\/+$/, "");
+            const targetEndpoint = `${baseUrl}/api/changePoster`;
+
+            const resp = await fetch(targetEndpoint, {
                 method: "POST",
                 body: form,
             });
@@ -832,7 +831,13 @@
 
             if (data.ok) {
                 setStatus("Thành công", "success");
+
+                // SỬA BUG 2: Revoke ObjectURL cũ trước khi tạo mới để tránh memory leak
+                if (modalPreviewObjectUrl) {
+                    URL.revokeObjectURL(modalPreviewObjectUrl);
+                }
                 modalPreviewObjectUrl = URL.createObjectURL(blob);
+
                 showModal(
                     "Đổi ảnh poster thành công!",
                     "success",
@@ -881,6 +886,5 @@
         }
     });
 
-    // Khởi tạo trạng thái ban đầu
     updateSubmitButton();
 })();
