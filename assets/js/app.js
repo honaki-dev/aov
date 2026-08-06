@@ -356,8 +356,8 @@
         resetValidityState();
 
         if (isLink) {
-            const existingUrl = extractUrlFromText(playerUrl.value);
-            if (existingUrl) renderLinkStatus(existingUrl);
+            const rawValue = playerUrl.value.trim();
+            if (rawValue) renderLinkStatus(rawValue);
         } else if (harFile) {
             renderHarStatus(harFile);
         }
