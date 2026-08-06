@@ -1,6 +1,7 @@
 (function () {
     const OUT_W = 1080,
         OUT_H = 1701;
+    const MAX_HAR_FILE_SIZE = 30 * 1024 * 1024; // 30MB
 
     const dropzone = document.getElementById("dropzone");
     const fileInput = document.getElementById("fileInput");
@@ -16,6 +17,17 @@
     };
     const playerUrl = document.getElementById("playerUrl");
     const pasteBtn = document.getElementById("pasteBtn");
+    const modeLinkBtn = document.getElementById("modeLinkBtn");
+    const modeHarBtn = document.getElementById("modeHarBtn");
+    const linkModeWrap = document.getElementById("linkModeWrap");
+    const harModeWrap = document.getElementById("harModeWrap");
+    const harDropzone = document.getElementById("harDropzone");
+    const harFileInput = document.getElementById("harFileInput");
+    const harDropzoneEmpty = document.getElementById("harDropzoneEmpty");
+    const harDropzoneSelected = document.getElementById("harDropzoneSelected");
+    const harDropzoneText = document.getElementById("harDropzoneText");
+    const shareOptionOff = document.getElementById("shareOptionOff");
+    const shareOptionOn = document.getElementById("shareOptionOn");
     const statusLine = document.getElementById("statusLine");
     const modalOverlay = document.getElementById("modalOverlay");
     const modalBox = document.getElementById("modalBox");
@@ -36,6 +48,9 @@
     let isValidLink = false;
     let userInfoData = null;
     let linkError = null;
+    let inputMode = "link"; // "link" | "har" - mặc định dùng link
+    let harFile = null; // File .har đang chọn (mode "har")
+    let shareEnabled = false; // mặc định: chỉ lưu, không chia sẻ công khai
 
     // 7 tham số bắt buộc
     const REQUIRED_PARAMS = [
@@ -115,8 +130,10 @@
         }
     }
 
-    async function fetchUserInfo(url) {
-        const cached = cache.get(url);
+    // cacheKey: string (mode "link") hoặc File (mode "har")
+    // requestInit: { method: "json", body } hoặc { method: "form", form }
+    async function fetchUserInfoRaw(cacheKey, buildRequest) {
+        const cached = cache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
             return cached.data;
         }
@@ -130,18 +147,15 @@
             const response = await fetch(
                 `${apiEndpoint.value}/api/getUserInfo`,
                 {
+                    ...buildRequest(),
                     method: "POST",
-                    headers: {
-                        "content-type": "application/json",
-                    },
-                    body: JSON.stringify({ url }),
                     signal: currentFetchController.signal,
                 },
             );
             const result = await response.json();
 
             if (result.ok && result.data) {
-                cache.set(url, {
+                cache.set(cacheKey, {
                     data: result.data,
                     timestamp: Date.now(),
                 });
@@ -157,6 +171,23 @@
         } finally {
             currentFetchController = null;
         }
+    }
+
+    function fetchUserInfo(url) {
+        return fetchUserInfoRaw(url, () => ({
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ url }),
+        }));
+    }
+
+    function fetchUserInfoByHar(file) {
+        // key theo tên + kích thước + lastModified để cache đúng file
+        const cacheKey = `har:${file.name}:${file.size}:${file.lastModified}`;
+        return fetchUserInfoRaw(cacheKey, () => {
+            const form = new FormData();
+            form.append("har", file);
+            return { body: form };
+        });
     }
 
     async function renderLinkStatus(rawValue) {
@@ -241,6 +272,149 @@
     }
 
     const debouncedRenderLinkStatus = debounce(renderLinkStatus, 500);
+
+    async function renderHarStatus(file) {
+        isValidLink = false;
+        userInfoData = null;
+        userInfoEl.classList.add("hidden");
+        linkError = null;
+
+        if (!file) {
+            if (!hasImage) clearStatus();
+            updateSubmitButton();
+            return;
+        }
+
+        setStatus("Đang đọc file HAR...");
+
+        let data;
+        try {
+            data = await fetchUserInfoByHar(file);
+        } catch (error) {
+            if (error.name !== "AbortError") {
+                linkError = "Lỗi kết nối đến server";
+                setStatus(linkError, "error");
+                console.error("Fetch error:", error);
+            }
+            updateSubmitButton();
+            return;
+        }
+
+        if (!data) {
+            linkError =
+                "Không tìm thấy thông tin người chơi, hãy vào game và lấy lại file";
+
+            setStatus(linkError, "error");
+            updateSubmitButton();
+            return;
+        }
+
+        try {
+            isValidLink = true;
+            userInfoData = data;
+            userInfoEl.classList.remove("hidden");
+            playerImageEl.src = data.avatarUrl;
+            playerRankEl.src = data.rank.imageUrl;
+            playerNameEl.textContent = data.playerName;
+            playerRankTextEl.textContent =
+                data.rank.text + " " + data.rank.star + " ⭐";
+            clearStatus();
+        } catch (error) {
+            isValidLink = false;
+            userInfoData = null;
+            userInfoEl.classList.add("hidden");
+            linkError = "Dữ liệu người chơi trả về không hợp lệ";
+            setStatus(linkError, "error");
+            console.error("Render user info error:", error);
+        } finally {
+            updateSubmitButton();
+        }
+    }
+
+    function resetValidityState() {
+        isValidLink = false;
+        userInfoData = null;
+        userInfoEl.classList.add("hidden");
+        linkError = null;
+        if (!hasImage) clearStatus();
+        updateSubmitButton();
+    }
+
+    function setMode(mode) {
+        if (inputMode === mode) return;
+        inputMode = mode;
+
+        if (currentFetchController) {
+            currentFetchController.abort();
+        }
+
+        const isLink = mode === "link";
+        modeLinkBtn.classList.toggle("active", isLink);
+        modeHarBtn.classList.toggle("active", !isLink);
+        linkModeWrap.classList.toggle("hidden", !isLink);
+        harModeWrap.classList.toggle("hidden", isLink);
+
+        resetValidityState();
+    }
+
+    modeLinkBtn.addEventListener("click", () => setMode("link"));
+    modeHarBtn.addEventListener("click", () => setMode("har"));
+
+    function setShare(enabled) {
+        shareEnabled = enabled;
+        shareOptionOff.classList.toggle("active", !enabled);
+        shareOptionOn.classList.toggle("active", enabled);
+    }
+
+    shareOptionOff.addEventListener("click", () => setShare(false));
+    shareOptionOn.addEventListener("click", () => setShare(true));
+
+    // har dropzone / file input
+    harDropzone.addEventListener("click", () => {
+        if (isProcessing) return;
+        harFileInput.value = "";
+        harFileInput.click();
+    });
+    function setHarFile(file) {
+        if (file.size > MAX_HAR_FILE_SIZE) {
+            showModal(
+                `File HAR quá lớn (${(file.size / 1024 / 1024).toFixed(1)}MB), tối đa 30MB.`,
+                "error",
+            );
+            harFileInput.value = "";
+            return;
+        }
+        harFile = file;
+        harDropzoneText.textContent = "Đã chọn: " + file.name;
+        harDropzoneEmpty.classList.add("hidden");
+        harDropzoneSelected.classList.remove("hidden");
+        renderHarStatus(file);
+    }
+
+    harFileInput.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        setHarFile(file);
+    });
+    ["dragenter", "dragover"].forEach((evt) => {
+        harDropzone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            if (isProcessing) return;
+            harDropzone.classList.add("drag");
+        });
+    });
+    ["dragleave", "drop"].forEach((evt) => {
+        harDropzone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            harDropzone.classList.remove("drag");
+        });
+    });
+    harDropzone.addEventListener("drop", (e) => {
+        if (isProcessing) return;
+        const file = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (!file) return;
+        setHarFile(file);
+    });
 
     // Event listeners
     playerUrl.addEventListener("input", () => {
@@ -375,7 +549,7 @@
         isProcessing = state;
         updateSubmitButton();
         zoomSlider.disabled = state || !hasImage;
-        resetBtn.disabled = state;
+        if (resetBtn) resetBtn.disabled = state;
         pasteBtn.disabled = state;
         playerUrl.disabled = state;
         dropzone.classList.toggle("disabled", state);
@@ -439,7 +613,7 @@
             zoomSlider.value = 1;
             zoomSlider.disabled = false;
             hasImage = true;
-            resetBtn.classList.remove("hidden");
+            if (resetBtn) resetBtn.classList.remove("hidden");
             updateSubmitButton();
         };
         img.src = url;
@@ -547,23 +721,25 @@
     });
 
     // reset
-    resetBtn.addEventListener("click", () => {
-        if (isProcessing) return;
-        hasImage = false;
-        cropImg.style.display = "none";
-        if (currentBlobUrl) {
-            URL.revokeObjectURL(currentBlobUrl);
-            currentBlobUrl = null;
-        }
-        cropImg.src = "";
-        emptyState.style.display = "flex";
-        zoomSlider.value = 1;
-        zoomSlider.disabled = true;
-        fileInput.value = "";
-        resetBtn.classList.add("hidden");
-        clearStatus();
-        updateSubmitButton();
-    });
+    if (resetBtn) {
+        resetBtn.addEventListener("click", () => {
+            if (isProcessing) return;
+            hasImage = false;
+            cropImg.style.display = "none";
+            if (currentBlobUrl) {
+                URL.revokeObjectURL(currentBlobUrl);
+                currentBlobUrl = null;
+            }
+            cropImg.src = "";
+            emptyState.style.display = "flex";
+            zoomSlider.value = 1;
+            zoomSlider.disabled = true;
+            fileInput.value = "";
+            resetBtn.classList.add("hidden");
+            clearStatus();
+            updateSubmitButton();
+        });
+    }
 
     // getCroppedBlob
     function getCroppedBlob() {
@@ -602,14 +778,19 @@
 
         clearStatus();
         const endpoint = apiEndpoint.value.trim();
-        const purl = extractUrlFromText(playerUrl.value);
+        const purl =
+            inputMode === "link" ? extractUrlFromText(playerUrl.value) : null;
 
         if (!endpoint) {
             showModal("Thiếu Worker API endpoint.", "error");
             return;
         }
-        if (!purl) {
+        if (inputMode === "link" && !purl) {
             showModal("Không tìm thấy link hợp lệ.", "error");
+            return;
+        }
+        if (inputMode === "har" && !harFile) {
+            showModal("Chưa chọn file HAR.", "error");
             return;
         }
         if (!hasImage) {
@@ -624,12 +805,17 @@
             const blob = await getCroppedBlob();
 
             const form = new FormData();
-            form.append("url", purl);
+            if (inputMode === "link") {
+                form.append("url", purl);
+            } else {
+                form.append("har", harFile);
+            }
             form.append(
                 "image",
                 blob,
                 currentFileName.replace(/\.[^.]+$/, "") + "_cropped.png",
             );
+            form.append("share", String(shareEnabled));
 
             setStatus("Đang đổi...");
             const resp = await fetch(endpoint, {

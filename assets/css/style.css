@@ -131,6 +131,50 @@ body {
 .paste-btn:hover {
     border-color: var(--accent);
 }
+#harModeWrap {
+    margin-top: 4px;
+}
+#harModeWrap .dropzone {
+    padding: 18px 12px;
+}
+.share-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.share-option {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-align: left;
+    background: var(--panel-alt);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease;
+}
+.share-option:hover {
+    border-color: var(--accent);
+}
+.share-option.active {
+    border-color: var(--accent);
+    background: rgba(240, 185, 63, 0.12);
+}
+.share-option-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text);
+}
+.share-option.active .share-option-title {
+    color: var(--accent-bright);
+}
+.share-option-desc {
+    font-size: 10.5px;
+    color: var(--muted);
+}
 .field textarea {
     width: 100%;
     background: var(--panel-alt);
