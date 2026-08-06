@@ -821,7 +821,7 @@
 
             // SỬA BUG 1: Chuẩn hóa URL và thêm endpoint route
             const baseUrl = endpointRaw.replace(/\/+$/, "");
-            const targetEndpoint = `${baseUrl}/api/changePoster`;
+            const targetEndpoint = `${baseUrl}/api/poster`;
 
             const resp = await fetch(targetEndpoint, {
                 method: "POST",
