@@ -303,7 +303,6 @@
         if (!data) {
             linkError =
                 "Không tìm thấy thông tin người chơi, hãy vào game và lấy lại file";
-
             setStatus(linkError, "error");
             updateSubmitButton();
             return;
@@ -355,6 +354,13 @@
         harModeWrap.classList.toggle("hidden", isLink);
 
         resetValidityState();
+
+        if (isLink) {
+            const existingUrl = extractUrlFromText(playerUrl.value);
+            if (existingUrl) renderLinkStatus(existingUrl);
+        } else if (harFile) {
+            renderHarStatus(harFile);
+        }
     }
 
     modeLinkBtn.addEventListener("click", () => setMode("link"));
