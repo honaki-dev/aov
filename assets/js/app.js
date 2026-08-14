@@ -37,18 +37,9 @@
     const modalCloseBtn = document.getElementById("modalCloseBtn");
     const modalCloseX = document.getElementById("modalCloseX");
     const hiddenCanvas = document.getElementById("hiddenCanvas");
-    const userInfoEl = document.getElementById("userInfo");
-    const playerImageEl = document.getElementById("playerImage");
-    const playerRankEl = document.getElementById("playerRank");
-    const playerRankTextEl = document.getElementById("playerRankText");
-    const playerNameEl = document.getElementById("playerName");
 
     let isProcessing = false;
     let modalPreviewObjectUrl = null;
-    let currentFetchController = null;
-    let isValidLink = false;
-    let userInfoData = null;
-    let linkError = null;
     let inputMode = "link"; // "link" | "har"
     let harFile = null;
     let shareEnabled = false;
@@ -62,21 +53,6 @@
         { key: "lang", label: "lang" },
         { key: "aov_region", label: "aov_region" },
     ];
-
-    const cache = new Map();
-    const CACHE_DURATION = 5 * 60 * 1000;
-
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
 
     function validateLinkParams(url) {
         try {
@@ -114,12 +90,22 @@
         statusLine.className = "status-line";
     }
 
-    function updateSubmitButton() {
-        const hasValidLink = isValidLink && userInfoData !== null;
-        submitBtn.disabled = !(hasValidLink && hasImage && !isProcessing);
+    // Chỉ check "có nhập/chọn gì chưa" để bật nút - còn đúng/sai thật sự
+    // (đủ tham số, parse được, har hợp lệ...) sẽ check khi bấm nút submit.
+    function hasInputForCurrentMode() {
+        if (inputMode === "link") {
+            return !!extractUrlFromText(playerUrl.value);
+        }
+        return !!harFile;
+    }
 
-        if (!hasValidLink) {
-            submitBtn.title = "Link chưa hợp lệ hoặc chưa tải thông tin";
+    function updateSubmitButton() {
+        const ready = hasInputForCurrentMode() && hasImage && !isProcessing;
+        submitBtn.disabled = !ready;
+
+        if (!hasInputForCurrentMode()) {
+            submitBtn.title =
+                inputMode === "link" ? "Chưa nhập link" : "Chưa chọn file HAR";
         } else if (!hasImage) {
             submitBtn.title = "Chưa chọn ảnh";
         } else {
@@ -127,212 +113,9 @@
         }
     }
 
-    async function fetchUserInfoRaw(cacheKey, buildRequest) {
-        const cached = cache.get(cacheKey);
-        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-            return cached.data;
-        }
-
-        if (currentFetchController) {
-            currentFetchController.abort();
-        }
-        currentFetchController = new AbortController();
-
-        try {
-            const baseUrl = apiEndpoint.value.trim().replace(/\/+$/, "");
-            const response = await fetch(`${baseUrl}/api/getUserInfo`, {
-                ...buildRequest(),
-                method: "POST",
-                signal: currentFetchController.signal,
-            });
-            const result = await response.json();
-
-            if (result.ok && result.data) {
-                cache.set(cacheKey, {
-                    data: result.data,
-                    timestamp: Date.now(),
-                });
-                return result.data;
-            }
-            return null;
-        } catch (error) {
-            if (error.name === "AbortError") {
-                console.log("Fetch cancelled");
-                return null;
-            }
-            throw error;
-        } finally {
-            currentFetchController = null;
-        }
-    }
-
-    function fetchUserInfo(url) {
-        return fetchUserInfoRaw(url, () => ({
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ url }),
-        }));
-    }
-
-    function fetchUserInfoByHar(file) {
-        const cacheKey = `har:${file.name}:${file.size}:${file.lastModified}`;
-        return fetchUserInfoRaw(cacheKey, () => {
-            const form = new FormData();
-            form.append("har", file);
-            return { body: form };
-        });
-    }
-
-    async function renderLinkStatus(rawValue) {
-        const url = (rawValue || "").trim();
-
-        isValidLink = false;
-        userInfoData = null;
-        userInfoEl.classList.add("hidden");
-        linkError = null;
-
-        if (!url) {
-            if (!hasImage) clearStatus();
-            updateSubmitButton();
-            return;
-        }
-
-        try {
-            new URL(url);
-        } catch {
-            linkError = "Link không hợp lệ";
-            setStatus(linkError, "error");
-            updateSubmitButton();
-            return;
-        }
-
-        const paramCheck = validateLinkParams(url);
-        if (!paramCheck.valid) {
-            linkError = `Link thiếu ${paramCheck.missingCount} tham số (${paramCheck.missing.map((m) => m.label).join(", ")})`;
-            setStatus(linkError, "error");
-            updateSubmitButton();
-            return;
-        }
-
-        setStatus("Đang tải thông tin...");
-
-        let data;
-        try {
-            data = await fetchUserInfo(url);
-        } catch (error) {
-            if (error.name !== "AbortError") {
-                linkError = "Lỗi kết nối đến server";
-                setStatus(linkError, "error");
-                console.error("Fetch error:", error);
-            }
-            updateSubmitButton();
-            return;
-        }
-
-        if (!data) {
-            linkError =
-                "Không tìm thấy thông tin người chơi, hãy vào game và lấy lại link";
-            setStatus(linkError, "error");
-            updateSubmitButton();
-            return;
-        }
-
-        try {
-            isValidLink = true;
-            userInfoData = data;
-            userInfoEl.classList.remove("hidden");
-            playerImageEl.src = data.avatarUrl;
-            playerRankEl.src = data.rank.imageUrl;
-            playerNameEl.textContent = data.playerName;
-            playerRankTextEl.textContent =
-                data.rank.text + " " + data.rank.star + " ⭐";
-            clearStatus();
-        } catch (error) {
-            isValidLink = false;
-            userInfoData = null;
-            userInfoEl.classList.add("hidden");
-            linkError = "Dữ liệu người chơi trả về không hợp lệ";
-            setStatus(linkError, "error");
-            console.error("Render user info error:", error);
-        } finally {
-            updateSubmitButton();
-        }
-    }
-
-    const debouncedRenderLinkStatus = debounce(renderLinkStatus, 500);
-
-    async function renderHarStatus(file) {
-        isValidLink = false;
-        userInfoData = null;
-        userInfoEl.classList.add("hidden");
-        linkError = null;
-
-        if (!file) {
-            if (!hasImage) clearStatus();
-            updateSubmitButton();
-            return;
-        }
-
-        setStatus("Đang đọc file HAR...");
-
-        let data;
-        try {
-            data = await fetchUserInfoByHar(file);
-        } catch (error) {
-            if (error.name !== "AbortError") {
-                linkError = "Lỗi kết nối đến server";
-                setStatus(linkError, "error");
-                console.error("Fetch error:", error);
-            }
-            updateSubmitButton();
-            return;
-        }
-
-        if (!data) {
-            linkError =
-                "Không tìm thấy thông tin người chơi, hãy vào game và lấy lại file";
-            setStatus(linkError, "error");
-            updateSubmitButton();
-            return;
-        }
-
-        try {
-            isValidLink = true;
-            userInfoData = data;
-            userInfoEl.classList.remove("hidden");
-            playerImageEl.src = data.avatarUrl;
-            playerRankEl.src = data.rank.imageUrl;
-            playerNameEl.textContent = data.playerName;
-            playerRankTextEl.textContent =
-                data.rank.text + " " + data.rank.star + " ⭐";
-            clearStatus();
-        } catch (error) {
-            isValidLink = false;
-            userInfoData = null;
-            userInfoEl.classList.add("hidden");
-            linkError = "Dữ liệu người chơi trả về không hợp lệ";
-            setStatus(linkError, "error");
-            console.error("Render user info error:", error);
-        } finally {
-            updateSubmitButton();
-        }
-    }
-
-    function resetValidityState() {
-        isValidLink = false;
-        userInfoData = null;
-        userInfoEl.classList.add("hidden");
-        linkError = null;
-        if (!hasImage) clearStatus();
-        updateSubmitButton();
-    }
-
     function setMode(mode) {
         if (inputMode === mode) return;
         inputMode = mode;
-
-        if (currentFetchController) {
-            currentFetchController.abort();
-        }
 
         const isLink = mode === "link";
         modeLinkBtn.classList.toggle("active", isLink);
@@ -340,14 +123,8 @@
         linkModeWrap.classList.toggle("hidden", !isLink);
         harModeWrap.classList.toggle("hidden", isLink);
 
-        resetValidityState();
-
-        if (isLink) {
-            const rawValue = playerUrl.value.trim();
-            if (rawValue) renderLinkStatus(rawValue);
-        } else if (harFile) {
-            renderHarStatus(harFile);
-        }
+        if (!hasImage) clearStatus();
+        updateSubmitButton();
     }
 
     modeLinkBtn.addEventListener("click", () => setMode("link"));
@@ -381,7 +158,8 @@
         harDropzoneText.textContent = "Đã chọn: " + file.name;
         harDropzoneEmpty.classList.add("hidden");
         harDropzoneSelected.classList.remove("hidden");
-        renderHarStatus(file);
+        if (!hasImage) clearStatus();
+        updateSubmitButton();
     }
 
     harFileInput.addEventListener("change", (e) => {
@@ -413,42 +191,16 @@
     });
 
     playerUrl.addEventListener("input", () => {
-        const url = playerUrl.value.trim();
-
-        isValidLink = false;
-        userInfoData = null;
-        userInfoEl.classList.add("hidden");
-        linkError = null;
-
         if (!hasImage) clearStatus();
         updateSubmitButton();
-
-        if (url) {
-            debouncedRenderLinkStatus(url);
-        }
     });
 
     playerUrl.addEventListener("paste", () => {
-        isValidLink = false;
-        userInfoData = null;
-        userInfoEl.classList.add("hidden");
-        linkError = null;
-
-        if (!hasImage) clearStatus();
-        updateSubmitButton();
-
         setTimeout(() => {
             const extracted = extractUrlFromText(playerUrl.value);
-            if (extracted) {
-                playerUrl.value = extracted;
-                debouncedRenderLinkStatus(extracted);
-            } else {
-                isValidLink = false;
-                userInfoData = null;
-                userInfoEl.classList.add("hidden");
-                if (!hasImage) clearStatus();
-                updateSubmitButton();
-            }
+            if (extracted) playerUrl.value = extracted;
+            if (!hasImage) clearStatus();
+            updateSubmitButton();
         }, 0);
     });
 
@@ -466,17 +218,9 @@
             }
 
             const extracted = extractUrlFromText(text) || text.trim();
-
-            isValidLink = false;
-            userInfoData = null;
-            userInfoEl.classList.add("hidden");
-            linkError = null;
-
+            playerUrl.value = extracted;
             if (!hasImage) clearStatus();
             updateSubmitButton();
-
-            playerUrl.value = extracted;
-            debouncedRenderLinkStatus(extracted);
             playerUrl.focus();
         } catch (err) {
             showModal(
@@ -772,27 +516,50 @@
 
     submitBtn.addEventListener("click", async () => {
         if (submitBtn.disabled) {
-            showModal("Vui lòng kiểm tra lại link và ảnh.", "error");
+            showModal("Vui lòng kiểm tra lại link/file và ảnh.", "error");
             return;
         }
 
         clearStatus();
         const endpointRaw = apiEndpoint.value.trim();
-        const purl =
-            inputMode === "link" ? extractUrlFromText(playerUrl.value) : null;
 
         if (!endpointRaw) {
             showModal("Thiếu Worker API endpoint.", "error");
             return;
         }
-        if (inputMode === "link" && !purl) {
-            showModal("Không tìm thấy link hợp lệ.", "error");
-            return;
+
+        // Check đúng/sai của link (hoặc có file har chưa) NGAY LÚC BẤM GỬI,
+        // không check trước đó nữa.
+        let purl = null;
+        if (inputMode === "link") {
+            purl = extractUrlFromText(playerUrl.value);
+            if (!purl) {
+                showModal("Không tìm thấy link hợp lệ.", "error");
+                return;
+            }
+            try {
+                new URL(purl);
+            } catch {
+                showModal("Link không hợp lệ.", "error");
+                return;
+            }
+            const paramCheck = validateLinkParams(purl);
+            if (!paramCheck.valid) {
+                showModal(
+                    `Link thiếu ${paramCheck.missingCount} tham số (${paramCheck.missing
+                        .map((m) => m.label)
+                        .join(", ")}).`,
+                    "error",
+                );
+                return;
+            }
+        } else {
+            if (!harFile) {
+                showModal("Chưa chọn file HAR.", "error");
+                return;
+            }
         }
-        if (inputMode === "har" && !harFile) {
-            showModal("Chưa chọn file HAR.", "error");
-            return;
-        }
+
         if (!hasImage) {
             showModal("Chưa chọn ảnh.", "error");
             return;
@@ -854,15 +621,10 @@
 
                 if (resp.status === 403 && /createposter/i.test(errMsg)) {
                     showModal(
-                        "Link đã sai hoặc hết hạn - vui lòng lấy link mới.",
+                        "Link/File đã sai hoặc hết hạn - vui lòng lấy lại link hoặc file HAR mới.",
                         "error",
                     );
-                    isValidLink = false;
-                    userInfoData = null;
-                    userInfoEl.classList.add("hidden");
-                    linkError = "Link đã hết hạn";
-                    setStatus(linkError, "error");
-                    updateSubmitButton();
+                    setStatus("Link/File đã hết hạn", "error");
                 } else if (
                     /pic\s*invalid/i.test(errMsg) ||
                     resultBlob.includes("pic invalid")
