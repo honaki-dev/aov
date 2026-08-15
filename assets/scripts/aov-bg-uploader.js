@@ -409,5 +409,5 @@
     console.log(`%c🔗 GitHub: ${CONFIG.GITHUB}`, "color:#4ade80;");
     console.log(`%c🔗 Website: ${CONFIG.WEBSITE}`, "color:#4ade80;");
     console.log("[AOV BG Uploader] Commands:");
-    console.log("  - AOVCustomBG.upload() -> mở upload");
+    console.log("  - __AOV.upload() -> mở upload");
 })();
