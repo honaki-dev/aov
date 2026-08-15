@@ -396,7 +396,7 @@
         const uploadTile = document.querySelector("[data-aov-upload-tile]");
         if (uploadTile) uploadTile.click();
     }
-    window.AOVCustomBG = {
+    window.__AOV = {
         upload: uploadFunction,
         version: CONFIG.VERSION,
         author: CONFIG.AUTHOR,
