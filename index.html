@@ -55,7 +55,6 @@
         />
         <!-- End: Twitter Card -->
 
-        <!-- Màu accent hiển thị ở thanh embed Discord/Telegram và thanh trình duyệt mobile -->
         <meta name="theme-color" content="#005b96" />
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -78,7 +77,6 @@
         </div>
         <div class="wrap">
             <div class="grid">
-                <!-- LEFT: inputs -->
                 <div class="panel">
                     <div class="field">
                         <label>Xác Thực Tài Khoản</label>
@@ -103,7 +101,6 @@
                     </div>
 
                     <div class="field">
-                        <!-- Mode: dán link -->
                         <div id="linkModeWrap">
                             <div class="field-label-row">
                                 <label for="playerUrl">Link Poster</label>
@@ -122,24 +119,14 @@
                             ></textarea>
                         </div>
 
-                        <!-- Mode: upload file HAR -->
                         <div id="harModeWrap" class="hidden">
                             <label for="harFileInput">File HAR</label>
                             <div class="dropzone" id="harDropzone">
                                 <div id="harDropzoneEmpty">
                                     <div>
-                                        <strong>Chọn file .har</strong>
-                                        hoặc kéo thả vào khung
+                                        <strong>Chọn file .har</strong> hoặc kéo
+                                        thả vào khung
                                     </div>
-                                    <!-- <div
-                                        style="
-                                            margin-top: 4px;
-                                            font-size: 11.5px;
-                                        "
-                                    >
-                                        Chrome/Edge: F12 → Network → chuột phải
-                                        → Save all as HAR
-                                    </div> -->
                                 </div>
                                 <div id="harDropzoneSelected" class="hidden">
                                     <strong id="harDropzoneText"></strong>
@@ -158,121 +145,25 @@
                                     accept=".har,application/json"
                                 />
                             </div>
+                            <div id="harStatus" class="har-status"></div>
                         </div>
                     </div>
-
-                    <div class="field">
-                        <label>Ảnh Poster Mới</label>
-                        <div class="dropzone" id="dropzone">
-                            <div>
-                                <strong>Chọn ảnh</strong> hoặc kéo thả vào khung
-                            </div>
-                            <div style="margin-top: 4px; font-size: 11.5px">
-                                Định dạng hỗ trợ: JPG · PNG · WEBP
-                            </div>
-                            <input
-                                type="file"
-                                id="fileInput"
-                                accept="image/jpeg,image/png,image/webp"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label>Chia sẻ lên quảng trường</label>
-                        <div class="share-options">
-                            <button
-                                type="button"
-                                class="share-option active"
-                                id="shareOptionOff"
-                            >
-                                <span class="share-option-title"
-                                    >Không chia sẻ</span
-                                >
-                                <!-- <span class="share-option-desc"
-                                    >Ảnh vẫn sẽ được thấy bởi người khác khi
-                                    load trận</span
-                                > -->
-                            </button>
-                            <button
-                                type="button"
-                                class="share-option"
-                                id="shareOptionOn"
-                            >
-                                <span class="share-option-title"
-                                    >Chia sẻ lên quảng trường</span
-                                >
-                                <!-- <span class="share-option-desc"
-                                    >Ảnh vẫn sẽ được thấy bởi người khác khi
-                                    load trận, nhưng sẽ chia sẻ lên quảng trường
-                                    sáng tạo</span
-                                > -->
-                            </button>
-                        </div>
-                    </div>
-                    <p style="font-size: 12px" class="share-option-desc">
-                        Cho dù có chia sẻ hay không thì ảnh của bạn vẫn sẽ được
-                        thấy bởi người khác khi load trận
-                    </p>
 
                     <div class="divider"></div>
 
-                    <div style="height: 10px"></div>
-
-                    <button class="btn-primary" id="submitBtn" disabled>
-                        Đổi Poster Ngay
-                    </button>
-                    <!-- <button
-                        class="btn-ghost"
-                        id="resetBtn"
-                        style="width: 100%"
+                    <div
+                        style="display: flex; gap: 10px; flex-direction: column"
                     >
-                        Chọn Ảnh Khác
-                    </button> -->
-                </div>
-
-                <!-- RIGHT: crop stage -->
-                <div class="panel stage-panel">
-                    <div class="ratio-badge">Xem Trước Poster</div>
-                    <div class="status-line" id="statusLine"></div>
-
-                    <div class="frame-outer">
-                        <div class="crop-stage" id="cropStage">
-                            <div class="empty-state" id="emptyState">
-                                <div class="glyph">✦</div>
-                                <div>
-                                    Poster của bạn sẽ hiện ở đây<br />kéo &amp;
-                                    thu phóng để canh đúng
-                                </div>
-                            </div>
-                            <div class="crop-container" id="cropContainer">
-                                <img
-                                    id="cropImg"
-                                    style="display: none"
-                                    alt=""
-                                />
-                            </div>
-                            <div class="crop-overlay"></div>
-                        </div>
-                    </div>
-
-                    <div class="stage-controls">
-                        <div class="zoom-row">
-                            <span class="zoom-icon">–</span>
-                            <input
-                                type="range"
-                                id="zoomSlider"
-                                min="1"
-                                max="4"
-                                step="0.01"
-                                value="1"
-                                disabled
-                            />
-                            <span class="zoom-icon">+</span>
-                        </div>
-                        <div class="stage-hint">
-                            Kéo để di chuyển · trượt thanh để phóng to / nhỏ
-                        </div>
+                        <button
+                            class="btn-ghost"
+                            id="copyInjectBtn"
+                            style="width: 100%; font-size: 12px"
+                        >
+                            Copy Code Inject
+                        </button>
+                        <button class="btn-primary" id="goToGameBtn">
+                            Chuyển tới trang game
+                        </button>
                     </div>
                 </div>
             </div>
@@ -288,13 +179,6 @@
                 with <span style="color: red">♥</span>
             </div>
         </div>
-
-        <canvas
-            id="hiddenCanvas"
-            width="1080"
-            height="1701"
-            style="display: none"
-        ></canvas>
 
         <script src="assets/js/app.js"></script>
     </body>
