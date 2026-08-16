@@ -226,7 +226,7 @@
     document
         .getElementById("copyInjectBtn")
         .addEventListener("click", function () {
-            const injectCode = `javascript:(function(){const s=document.createElement("script");s.src="https://aov.honaki.site/assets/scripts/aov-bg-uploader.min.js";document.head.appendChild(s);})();`;
+            const injectCode = `javascript:(function(){const s=document.createElement("script");s.src="https://aov.honaki.site/assets/scripts/aov-bg-uploader.min.js?t="+Date.now();document.head.appendChild(s);})();`;
             navigator.clipboard
                 .writeText(injectCode)
                 .then(() => {

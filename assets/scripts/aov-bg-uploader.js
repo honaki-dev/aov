@@ -1,6 +1,6 @@
 // ================================================================
 //              [AOV Custom Background Uploader]
-//   Version: 0.0.1
+//   Version: 0.0.2
 //   Author: Honaki Tran (https://aov.honaki.site)
 //   GitHub: https://github.com/honaki-dev
 //   Contact: me@honaki.site
@@ -10,7 +10,7 @@
     "use strict";
 
     const CONFIG = {
-        VERSION: "0.0.1",
+        VERSION: "0.0.2",
         AUTHOR: "Honaki Tran",
         GITHUB: "https://github.com/honaki-dev",
         WEBSITE: "https://aov.honaki.site",
@@ -46,14 +46,25 @@
         return best;
     }
 
+    function getImageDisplayRatio(imgEl) {
+        if (!imgEl) return 1701 / 1080;
+        return imgEl.offsetHeight / imgEl.offsetWidth;
+    }
+
     function openCropModal(file, onConfirm) {
+        const currentImg = findBackgroundImgEl();
+        const aspect = currentImg
+            ? getImageDisplayRatio(currentImg)
+            : 1701 / 1080;
+
         const layerBox = findBackgroundLayerBox();
-        const aspect =
+        const finalAspect =
             layerBox && layerBox.offsetWidth && layerBox.offsetHeight
                 ? layerBox.offsetHeight / layerBox.offsetWidth
-                : 1701 / 1080;
+                : aspect;
+
         const OUT_W = 1080;
-        const OUT_H = Math.round(OUT_W * aspect);
+        const OUT_H = Math.round(OUT_W * finalAspect);
 
         const host = document.createElement("div");
         host.id = "aov-crop-modal-host";
@@ -312,6 +323,42 @@
         }
     }
 
+    function applyBackgroundImage(blob) {
+        const bgImg = findBackgroundImgEl();
+        if (!bgImg) {
+            alert("Không tìm thấy layer ảnh nền, thử lại sau.");
+            return false;
+        }
+
+        const layerBox = findBackgroundLayerBox();
+        const newUrl = URL.createObjectURL(blob);
+
+        if (layerBox) {
+            const w = layerBox.offsetWidth;
+            const h = layerBox.offsetHeight;
+
+            bgImg.style.width = w + "px";
+            bgImg.style.height = h + "px";
+            bgImg.style.objectFit = "cover";
+            bgImg.style.objectPosition = "center center";
+
+            bgImg.style.display = "block";
+            bgImg.style.position = "absolute";
+            bgImg.style.top = "0";
+            bgImg.style.left = "0";
+        }
+
+        bgImg.src = newUrl;
+
+        if (lastAppliedObjectUrl && lastAppliedObjectUrl !== newUrl) {
+            URL.revokeObjectURL(lastAppliedObjectUrl);
+        }
+        lastAppliedObjectUrl = newUrl;
+        customFullBlob = blob;
+
+        return true;
+    }
+
     function injectUploadTile() {
         const grid = document.querySelector(
             ".backgroundTab-kIWXv .camp-grid-list",
@@ -354,18 +401,7 @@
             const file = e.target.files && e.target.files[0];
             if (!file) return;
             openCropModal(file, (blob) => {
-                const bgImg = findBackgroundImgEl();
-                if (!bgImg) {
-                    alert("Không tìm thấy layer ảnh nền, thử lại sau.");
-                    return;
-                }
-                const newUrl = URL.createObjectURL(blob);
-                bgImg.src = newUrl;
-                if (lastAppliedObjectUrl)
-                    URL.revokeObjectURL(lastAppliedObjectUrl);
-                lastAppliedObjectUrl = newUrl;
-
-                customFullBlob = blob;
+                applyBackgroundImage(blob);
             });
         });
 
