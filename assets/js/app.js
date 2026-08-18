@@ -16,11 +16,12 @@
     let harFile = null;
     let extractedUrl = null;
     let isProcessing = false;
+    let pendingFile = null;
 
     function isValidDomain(url) {
         try {
             const parsed = new URL(url);
-            const hostname = parsed.hostname;
+            const hostname = parsed.hostname.toLowerCase();
             return (
                 hostname === "kgvn-camp.mobagarena.com" ||
                 hostname.endsWith(".kgvn-camp.mobagarena.com")
@@ -30,12 +31,17 @@
         }
     }
 
+    function trimTrailingJunk(url) {
+        return url.replace(/[.,;:!?)\]}'"]+$/, "");
+    }
+
     function normalizeUrl(url) {
         try {
-            const parsed = new URL(url);
-            if (!isValidDomain(url)) {
+            const cleaned = trimTrailingJunk(url.trim());
+            if (!isValidDomain(cleaned)) {
                 return null;
             }
+            const parsed = new URL(cleaned);
             return parsed.toString();
         } catch {
             return null;
@@ -53,6 +59,10 @@
         if (isLink) {
             harStatus.textContent = "";
             harStatus.className = "har-status";
+            harFile = null;
+            extractedUrl = null;
+            harDropzoneEmpty.classList.remove("hidden");
+            harDropzoneSelected.classList.add("hidden");
         }
     }
 
@@ -64,38 +74,82 @@
         harFileInput.click();
     });
 
+    function isImageEntry(entry) {
+        const mime = entry?.response?.content?.mimeType || "";
+        return mime.toLowerCase().startsWith("image/");
+    }
+
+    function entryStatusOk(entry) {
+        const status = entry?.response?.status;
+        return typeof status !== "number" || (status >= 200 && status < 400);
+    }
+
+    function bodySizeOf(entry) {
+        const size =
+            entry?.response?.content?.size ?? entry?.response?.bodySize ?? 0;
+        return typeof size === "number" && size > 0 ? size : 0;
+    }
+
+    function pickBestEntry(entries) {
+        const candidates = entries.filter((e) =>
+            isValidDomain(e.request?.url || ""),
+        );
+        if (candidates.length === 0) return null;
+
+        let pool = candidates.filter(
+            (e) =>
+                (e.request.url || "").includes("player-poster") &&
+                isImageEntry(e) &&
+                entryStatusOk(e),
+        );
+        if (pool.length > 0) {
+            pool.sort((a, b) => bodySizeOf(b) - bodySizeOf(a));
+            return pool[0].request.url;
+        }
+
+        pool = candidates.filter(
+            (e) =>
+                (e.request.url || "").includes("player-poster") &&
+                entryStatusOk(e),
+        );
+        if (pool.length > 0) return pool[0].request.url;
+
+        pool = candidates.filter((e) =>
+            (e.request.url || "").includes("player-poster"),
+        );
+        if (pool.length > 0) return pool[0].request.url;
+
+        pool = candidates.filter((e) => isImageEntry(e) && entryStatusOk(e));
+        if (pool.length > 0) return pool[0].request.url;
+
+        return candidates[0].request.url;
+    }
+
     function extractLinkFromHar(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = function (e) {
                 try {
                     const har = JSON.parse(e.target.result);
-                    const entries = har.log?.entries || [];
+                    const entries = har?.log?.entries;
 
-                    for (const entry of entries) {
-                        const url = entry.request?.url || "";
-                        if (
-                            isValidDomain(url) &&
-                            url.includes("player-poster")
-                        ) {
-                            resolve(url);
-                            return;
-                        }
+                    if (!Array.isArray(entries) || entries.length === 0) {
+                        reject(
+                            new Error("File HAR không có dữ liệu request nào"),
+                        );
+                        return;
                     }
 
-                    for (const entry of entries) {
-                        const url = entry.request?.url || "";
-                        if (isValidDomain(url)) {
-                            resolve(url);
-                            return;
-                        }
+                    const best = pickBestEntry(entries);
+                    if (best) {
+                        resolve(best);
+                    } else {
+                        reject(
+                            new Error(
+                                "Không tìm thấy link hợp lệ (chỉ hỗ trợ kgvn-camp.mobagarena.com)",
+                            ),
+                        );
                     }
-
-                    reject(
-                        new Error(
-                            "Không tìm thấy link hợp lệ (chỉ hỗ trợ kgvn-camp.mobagarena.com)",
-                        ),
-                    );
                 } catch (err) {
                     reject(new Error("File HAR không hợp lệ"));
                 }
@@ -106,7 +160,13 @@
     }
 
     function setHarFile(file) {
-        if (isProcessing) return;
+        if (isProcessing) {
+            pendingFile = file;
+            harStatus.textContent =
+                "⏳ Đang xử lý file trước, sẽ chuyển sang file mới ngay sau đó...";
+            harStatus.className = "har-status";
+            return;
+        }
         isProcessing = true;
 
         harFile = file;
@@ -115,6 +175,7 @@
         harDropzoneSelected.classList.remove("hidden");
         harStatus.textContent = "⏳ Đang xử lý...";
         harStatus.className = "har-status";
+        extractedUrl = null;
 
         extractLinkFromHar(file)
             .then((url) => {
@@ -137,6 +198,11 @@
             })
             .finally(() => {
                 isProcessing = false;
+                if (pendingFile) {
+                    const next = pendingFile;
+                    pendingFile = null;
+                    setHarFile(next);
+                }
             });
     }
 
@@ -191,7 +257,7 @@
     function extractUrlFromText(text) {
         if (!text) return null;
         const match = text.match(/https?:\/\/[^\s"'<>]+/);
-        return match ? match[0] : null;
+        return match ? trimTrailingJunk(match[0]) : null;
     }
 
     const modalOverlay = document.getElementById("modalOverlay");

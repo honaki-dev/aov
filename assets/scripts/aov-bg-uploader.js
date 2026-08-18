@@ -1,6 +1,6 @@
 // ================================================================
 //              [AOV Custom Background Uploader]
-//   Version: 0.0.3
+//   Version: 0.0.4
 //   Author: Honaki Tran (https://aov.honaki.site)
 //   GitHub: https://github.com/honaki-dev
 //   Contact: me@honaki.site
@@ -29,10 +29,6 @@
     };
     const bgLayerSelect = selector[nowLocation].backgroundLayer;
     const bgImgSelect = selector[nowLocation].backgroundImage;
-    if (nowLocation.includes("flowborn")) {
-        const imgs = document.querySelectorAll(bgImgSelect);
-        if (imgs.length > 0) imgs[imgs.length - 1].remove();
-    }
 
     function findBackgroundLayerBox() {
         const boxes = document.querySelectorAll(bgLayerSelect);
@@ -52,6 +48,11 @@
         const imgs = document.querySelectorAll(bgImgSelect);
         let best = null,
             bestArea = 0;
+        if (nowLocation.includes("flowborn")) {
+            best = imgs[imgs.length - 1];
+            best.style.cssText = imgs[0].style.cssText;
+            return best;
+        }
         imgs.forEach((img) => {
             const area = img.offsetWidth * img.offsetHeight;
             if (area > bestArea) {
