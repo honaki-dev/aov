@@ -1,6 +1,6 @@
 // ================================================================
 //              [AOV Custom Background Uploader]
-//   Version: 0.0.2
+//   Version: 0.0.3
 //   Author: Honaki Tran (https://aov.honaki.site)
 //   GitHub: https://github.com/honaki-dev
 //   Contact: me@honaki.site
@@ -10,16 +10,32 @@
     "use strict";
 
     const CONFIG = {
-        VERSION: "0.0.2",
+        VERSION: "0.0.3",
         AUTHOR: "Honaki Tran",
         GITHUB: "https://github.com/honaki-dev",
         WEBSITE: "https://aov.honaki.site",
     };
 
+    const nowLocation = window.location.pathname.replace("/app/", "");
+    const selector = {
+        "flowborn-poster-editor": {
+            backgroundLayer: ".container-EHg4Y > div[data-id]",
+            backgroundImage: ".container-EHg4Y img[data-id]",
+        },
+        "player-poster-editor": {
+            backgroundLayer: ".container-g_mSG > div[data-id]",
+            backgroundImage: ".container-g_mSG img[data-id]",
+        },
+    };
+    const bgLayerSelect = selector[nowLocation].backgroundLayer;
+    const bgImgSelect = selector[nowLocation].backgroundImage;
+    if (nowLocation.includes("flowborn")) {
+        const imgs = document.querySelectorAll(bgImgSelect);
+        if (imgs.length > 0) imgs[imgs.length - 1].remove();
+    }
+
     function findBackgroundLayerBox() {
-        const boxes = document.querySelectorAll(
-            ".container-g_mSG > div[data-id]",
-        );
+        const boxes = document.querySelectorAll(bgLayerSelect);
         let best = null,
             bestArea = 0;
         boxes.forEach((box) => {
@@ -33,7 +49,7 @@
     }
 
     function findBackgroundImgEl() {
-        const imgs = document.querySelectorAll(".container-g_mSG img[data-id]");
+        const imgs = document.querySelectorAll(bgImgSelect);
         let best = null,
             bestArea = 0;
         imgs.forEach((img) => {
@@ -360,9 +376,7 @@
     }
 
     function injectUploadTile() {
-        const grid = document.querySelector(
-            ".backgroundTab-kIWXv .camp-grid-list",
-        );
+        const grid = document.querySelector(".camp-grid-list");
         if (!grid) return;
         if (grid.querySelector("[data-aov-upload-tile]")) return;
 
@@ -445,5 +459,5 @@
     console.log(`%c🔗 GitHub: ${CONFIG.GITHUB}`, "color:#4ade80;");
     console.log(`%c🔗 Website: ${CONFIG.WEBSITE}`, "color:#4ade80;");
     console.log("[AOV BG Uploader] Commands:");
-    console.log("  - __AOV.upload() -> mở upload");
+    console.log("> __AOV.upload() -> mở upload");
 })();
