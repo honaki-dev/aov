@@ -1,4 +1,6 @@
 (function () {
+    const typePlayerBtn = document.getElementById("typePlayerBtn");
+    const typeFlowbornBtn = document.getElementById("typeFlowbornBtn");
     const modeLinkBtn = document.getElementById("modeLinkBtn");
     const modeHarBtn = document.getElementById("modeHarBtn");
     const linkModeWrap = document.getElementById("linkModeWrap");
@@ -12,11 +14,43 @@
     const playerUrl = document.getElementById("playerUrl");
     const pasteBtn = document.getElementById("pasteBtn");
 
+    let posterType = "player"; // "player" | "flowborn"
     let inputMode = "link";
-    let harFile = null;
     let extractedUrl = null;
     let isProcessing = false;
     let pendingFile = null;
+
+    function setPosterType(type) {
+        if (posterType === type) return;
+        posterType = type;
+        const isPlayer = type === "player";
+        typePlayerBtn.classList.toggle("active", isPlayer);
+        typeFlowbornBtn.classList.toggle("active", !isPlayer);
+        playerUrl.placeholder = isPlayer
+            ? "https://kgvn-camp.mobagarena.com/app/player-poster?..."
+            : "https://kgvn-camp.mobagarena.com/app/flowborn-poster?...";
+
+        if (extractedUrl) {
+            extractedUrl = applyPosterTypeToUrl(extractedUrl, type);
+        }
+    }
+
+    typePlayerBtn.addEventListener("click", () => setPosterType("player"));
+    typeFlowbornBtn.addEventListener("click", () => setPosterType("flowborn"));
+
+    function applyPosterTypeToUrl(url, type) {
+        try {
+            const parsed = new URL(url);
+            const targetPath =
+                type === "flowborn"
+                    ? "/app/flowborn-poster"
+                    : "/app/player-poster";
+            parsed.pathname = targetPath;
+            return parsed.toString();
+        } catch {
+            return url;
+        }
+    }
 
     function isValidDomain(url) {
         try {
@@ -59,7 +93,6 @@
         if (isLink) {
             harStatus.textContent = "";
             harStatus.className = "har-status";
-            harFile = null;
             extractedUrl = null;
             harDropzoneEmpty.classList.remove("hidden");
             harDropzoneSelected.classList.add("hidden");
@@ -74,55 +107,175 @@
         harFileInput.click();
     });
 
-    function isImageEntry(entry) {
-        const mime = entry?.response?.content?.mimeType || "";
-        return mime.toLowerCase().startsWith("image/");
-    }
+    const API_POSTER_KEYWORD = "kgvn-api.mobagarena.com/api/game/poster";
+    const HEADER_ALIASES = {
+        partition: ["partition", "logicworldid", "worldid"],
+        channelid: ["channelid", "msdk-channelid", "msdk_channelid"],
+        gameid: ["gameid", "msdk-gameid", "msdk_gameid"],
+        itopencodeparam: [
+            "itopencodeparam",
+            "msdk-itopencodeparam",
+            "msdk_itopencodeparam",
+        ],
+        os: ["os", "msdk-os", "msdk_os"],
+        lang: ["lang", "aov-language", "aov_language", "language"],
+        aov_region: ["aov_region", "aov-region", "region"],
+        aov_areaid: ["aov_areaid", "aov-areaid", "areaid"],
+        access_token: ["access_token", "token", "msdk-token"],
+        sig: ["sig", "signature", "msdk-sig"],
+        seq: ["seq", "msdk-seq"],
+        ts: ["ts", "timestamp", "msdk-ts"],
+        nickname: ["nickname", "msdk-nickname", "name"],
+        algorithm: ["algorithm"],
+        encode: ["encode"],
+        version: ["version"],
+        from: ["from"],
+        orientation: ["orientation"],
+        isLowDevice: ["isLowDevice", "islowdevice"],
+    };
+
+    const REQUIRED_PARAMS = [
+        "partition",
+        "channelid",
+        "gameid",
+        "itopencodeparam",
+        "os",
+        "lang",
+        "aov_region",
+    ];
 
     function entryStatusOk(entry) {
         const status = entry?.response?.status;
         return typeof status !== "number" || (status >= 200 && status < 400);
     }
 
-    function bodySizeOf(entry) {
-        const size =
-            entry?.response?.content?.size ?? entry?.response?.bodySize ?? 0;
-        return typeof size === "number" && size > 0 ? size : 0;
-    }
+    function getParamValue(entry, key) {
+        const aliases = HEADER_ALIASES[key] || [key];
 
-    function pickBestEntry(entries) {
-        const candidates = entries.filter((e) =>
-            isValidDomain(e.request?.url || ""),
-        );
-        if (candidates.length === 0) return null;
-
-        let pool = candidates.filter(
-            (e) =>
-                (e.request.url || "").includes("player-poster") &&
-                isImageEntry(e) &&
-                entryStatusOk(e),
-        );
-        if (pool.length > 0) {
-            pool.sort((a, b) => bodySizeOf(b) - bodySizeOf(a));
-            return pool[0].request.url;
+        // 1. Kiểm tra request headers
+        const headers = entry?.request?.headers;
+        if (Array.isArray(headers)) {
+            for (const alias of aliases) {
+                const header = headers.find(
+                    (h) => (h.name || "").toLowerCase() === alias.toLowerCase(),
+                );
+                if (
+                    header &&
+                    header.value !== undefined &&
+                    header.value !== null &&
+                    header.value !== ""
+                ) {
+                    return header.value;
+                }
+            }
         }
 
-        pool = candidates.filter(
-            (e) =>
-                (e.request.url || "").includes("player-poster") &&
-                entryStatusOk(e),
-        );
-        if (pool.length > 0) return pool[0].request.url;
+        // 2. Kiểm tra queryString trong request
+        const query = entry?.request?.queryString;
+        if (Array.isArray(query)) {
+            for (const alias of aliases) {
+                const q = query.find(
+                    (item) =>
+                        (item.name || "").toLowerCase() === alias.toLowerCase(),
+                );
+                if (
+                    q &&
+                    q.value !== undefined &&
+                    q.value !== null &&
+                    q.value !== ""
+                ) {
+                    return q.value;
+                }
+            }
+        }
 
-        pool = candidates.filter((e) =>
-            (e.request.url || "").includes("player-poster"),
-        );
-        if (pool.length > 0) return pool[0].request.url;
+        // 3. Kiểm tra query params trên URL
+        try {
+            if (entry?.request?.url) {
+                const parsed = new URL(entry.request.url);
+                for (const alias of aliases) {
+                    const val = parsed.searchParams.get(alias);
+                    if (val !== null && val !== "") return val;
+                }
+            }
+        } catch {}
 
-        pool = candidates.filter((e) => isImageEntry(e) && entryStatusOk(e));
-        if (pool.length > 0) return pool[0].request.url;
+        return null;
+    }
 
-        return candidates[0].request.url;
+    function buildCampUrlFromApiEntry(entry) {
+        const params = new URLSearchParams();
+        const missing = [];
+
+        for (const key of REQUIRED_PARAMS) {
+            const value = getParamValue(entry, key);
+            if (value !== null && value !== "") {
+                params.set(key, value);
+            } else {
+                missing.push(key);
+            }
+        }
+
+        if (missing.length > 0) {
+            return null;
+        }
+
+        // Đính kèm thêm các param phụ nếu có
+        for (const key of Object.keys(HEADER_ALIASES)) {
+            if (!REQUIRED_PARAMS.includes(key)) {
+                const value = getParamValue(entry, key);
+                if (value !== null && value !== "") {
+                    params.set(key, value);
+                }
+            }
+        }
+
+        const baseUrl =
+            posterType === "flowborn"
+                ? "https://kgvn-camp.mobagarena.com/app/flowborn-poster"
+                : "https://kgvn-camp.mobagarena.com/app/player-poster";
+
+        return baseUrl + "?" + params.toString();
+    }
+
+    function findCampUrlFromHarEntries(entries) {
+        // 1. Kiểm tra nếu có request trực tiếp chứa đầy đủ link CAMP + itopencodeparam
+        for (const e of entries) {
+            const u = e.request?.url || "";
+            if (
+                u.includes("kgvn-camp.mobagarena.com/app/") &&
+                (u.includes("player-poster") ||
+                    u.includes("flowborn-poster")) &&
+                u.includes("itopencodeparam=")
+            ) {
+                return u;
+            }
+        }
+
+        // 2. Tìm và ghép từ request API poster
+        const apiEntries = entries.filter((e) => {
+            const url = (e.request?.url || "").toLowerCase();
+            return url.includes(API_POSTER_KEYWORD);
+        });
+        if (apiEntries.length === 0) return null;
+
+        // Ưu tiên: POST request và status OK
+        apiEntries.sort((a, b) => {
+            const aPost =
+                (a.request?.method || "").toUpperCase() === "POST" ? 1 : 0;
+            const bPost =
+                (b.request?.method || "").toUpperCase() === "POST" ? 1 : 0;
+            const aOk = entryStatusOk(a) ? 1 : 0;
+            const bOk = entryStatusOk(b) ? 1 : 0;
+            return bPost + bOk - (aPost + aOk);
+        });
+
+        for (const entry of apiEntries) {
+            const campUrl = buildCampUrlFromApiEntry(entry);
+            if (campUrl) return campUrl;
+        }
+
+        return null;
     }
 
     function extractLinkFromHar(file) {
@@ -140,16 +293,17 @@
                         return;
                     }
 
-                    const best = pickBestEntry(entries);
-                    if (best) {
-                        resolve(best);
-                    } else {
-                        reject(
-                            new Error(
-                                "Không tìm thấy link hợp lệ (chỉ hỗ trợ kgvn-camp.mobagarena.com)",
-                            ),
-                        );
+                    const campUrl = findCampUrlFromHarEntries(entries);
+                    if (campUrl) {
+                        resolve(campUrl);
+                        return;
                     }
+
+                    reject(
+                        new Error(
+                            "Không tìm thấy thông tin xác thực poster trong file HAR",
+                        ),
+                    );
                 } catch (err) {
                     reject(new Error("File HAR không hợp lệ"));
                 }
@@ -169,7 +323,6 @@
         }
         isProcessing = true;
 
-        harFile = file;
         harDropzoneText.textContent = "Đã chọn: " + file.name;
         harDropzoneEmpty.classList.add("hidden");
         harDropzoneSelected.classList.remove("hidden");
@@ -270,7 +423,7 @@
     function showModal(message, type = "error") {
         modalBox.className = "modal-box " + type;
         modalIcon.textContent = type === "success" ? "✓" : "!";
-        modalMessage.innerHTML = message;
+        modalMessage.textContent = message;
         modalOverlay.classList.add("show");
     }
 
@@ -326,8 +479,10 @@
         .addEventListener("click", function () {
             let targetUrl = null;
 
-            if (inputMode === "har" && extractedUrl) {
-                targetUrl = extractedUrl;
+            if (inputMode === "har") {
+                if (extractedUrl) {
+                    targetUrl = extractedUrl;
+                }
             } else {
                 const urlText = document
                     .getElementById("playerUrl")
@@ -342,6 +497,7 @@
             }
 
             if (targetUrl) {
+                targetUrl = applyPosterTypeToUrl(targetUrl, posterType);
                 window.location.href = targetUrl;
             } else {
                 showModal(

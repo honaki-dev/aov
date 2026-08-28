@@ -104,8 +104,10 @@ body {
 .share-option {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: 3px;
-    text-align: left;
+    text-align: center;
     background: var(--panel-alt);
     border: 1px solid var(--line);
     border-radius: 10px;
@@ -126,6 +128,8 @@ body {
     font-size: 12.5px;
     font-weight: 700;
     color: var(--text);
+    text-align: center;
+    width: 100%;
 }
 .share-option.active .share-option-title {
     color: var(--accent-bright);
@@ -197,11 +201,17 @@ button {
     font-size: 13.5px;
     font-weight: 600;
     letter-spacing: 0.01em;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .btn-primary {
     width: 100%;
     background: linear-gradient(180deg, var(--accent-bright), var(--accent));
     color: #241608;
+    text-align: center;
+    justify-content: center;
 }
 .btn-primary:hover {
     filter: brightness(1.06);
@@ -210,6 +220,8 @@ button {
     background: transparent;
     color: var(--muted);
     border: 1px solid var(--line);
+    text-align: center;
+    justify-content: center;
 }
 .btn-ghost:hover {
     color: var(--text);

@@ -1,6 +1,6 @@
 // ================================================================
 //              [AOV Custom Background Uploader]
-//   Version: 0.0.4
+//   Version: 0.0.5
 //   Author: Honaki Tran (https://aov.honaki.site)
 //   GitHub: https://github.com/honaki-dev
 //   Contact: me@honaki.site
@@ -10,13 +10,21 @@
     "use strict";
 
     const CONFIG = {
-        VERSION: "0.0.3",
+        VERSION: "0.0.5",
         AUTHOR: "Honaki Tran",
         GITHUB: "https://github.com/honaki-dev",
         WEBSITE: "https://aov.honaki.site",
     };
 
-    const nowLocation = window.location.pathname.replace("/app/", "");
+    console.log("[AOV BG Uploader] Loaded!");
+    console.log(`%c📦 Version: ${CONFIG.VERSION}`, "color:#96909e;");
+    console.log(`%c👨‍💻 Author: ${CONFIG.AUTHOR}`, "color:#96909e;");
+    console.log(`%c🔗 GitHub: ${CONFIG.GITHUB}`, "color:#4ade80;");
+    console.log(`%c🔗 Website: ${CONFIG.WEBSITE}`, "color:#4ade80;");
+
+    const nowLocation = window.location.pathname
+        .replace("/app/", "")
+        .replace(/\/+$/, "");
     const selector = {
         "flowborn-poster-editor": {
             backgroundLayer: ".container-EHg4Y > div[data-id]",
@@ -27,8 +35,13 @@
             backgroundImage: ".container-g_mSG img[data-id]",
         },
     };
-    const bgLayerSelect = selector[nowLocation].backgroundLayer;
-    const bgImgSelect = selector[nowLocation].backgroundImage;
+    const selectorConfig = selector[nowLocation];
+    if (!selectorConfig) {
+        console.warn("[AOV BG Uploader] Trang không được hỗ trợ:", nowLocation);
+        return;
+    }
+    const bgLayerSelect = selectorConfig.backgroundLayer;
+    const bgImgSelect = selectorConfig.backgroundImage;
 
     function findBackgroundLayerBox() {
         const boxes = document.querySelectorAll(bgLayerSelect);
@@ -46,13 +59,12 @@
 
     function findBackgroundImgEl() {
         const imgs = document.querySelectorAll(bgImgSelect);
+        if (imgs.length === 0) return null;
+        if (nowLocation.includes("flowborn")) {
+            return imgs[imgs.length - 1];
+        }
         let best = null,
             bestArea = 0;
-        if (nowLocation.includes("flowborn")) {
-            best = imgs[imgs.length - 1];
-            best.style.cssText = imgs[0].style.cssText;
-            return best;
-        }
         imgs.forEach((img) => {
             const area = img.offsetWidth * img.offsetHeight;
             if (area > bestArea) {
@@ -60,11 +72,12 @@
                 best = img;
             }
         });
-        return best;
+        return best || imgs[imgs.length - 1];
     }
 
     function getImageDisplayRatio(imgEl) {
-        if (!imgEl) return 1701 / 1080;
+        if (!imgEl || !imgEl.offsetWidth || !imgEl.offsetHeight)
+            return 1701 / 1080;
         return imgEl.offsetHeight / imgEl.offsetWidth;
     }
 
@@ -160,6 +173,8 @@
         const btnConfirm = root.getElementById("btnConfirm");
 
         function close() {
+            window.removeEventListener("mousemove", onWindowMouseMove);
+            window.removeEventListener("mouseup", onWindowMouseUp);
             URL.revokeObjectURL(objectUrl);
             host.remove();
         }
@@ -215,6 +230,10 @@
             clampPosition();
             applyTransform();
         };
+        img.onerror = function () {
+            alert("Không thể tải ảnh này. Vui lòng thử chọn ảnh khác.");
+            close();
+        };
         img.src = objectUrl;
 
         zoomSlider.addEventListener("input", () => {
@@ -249,13 +268,13 @@
             dragging = false;
             stageWrap.classList.remove("grabbing");
         }
+        const onWindowMouseMove = (e) => moveDrag(e.clientX, e.clientY);
+        const onWindowMouseUp = () => endDrag();
         stageWrap.addEventListener("mousedown", (e) =>
             startDrag(e.clientX, e.clientY),
         );
-        window.addEventListener("mousemove", (e) =>
-            moveDrag(e.clientX, e.clientY),
-        );
-        window.addEventListener("mouseup", endDrag);
+        window.addEventListener("mousemove", onWindowMouseMove);
+        window.addEventListener("mouseup", onWindowMouseUp);
         stageWrap.addEventListener(
             "touchstart",
             (e) => {
@@ -289,56 +308,13 @@
                     if (blob) onConfirm(blob);
                     close();
                 },
-                "image/png",
+                "image/jpeg",
                 0.95,
             );
         });
     }
 
-    let activeClass = null;
-    let customTileEl = null;
-    let customFullBlob = null;
     let lastAppliedObjectUrl = null;
-
-    function detectActiveClassOnce() {
-        if (activeClass) return activeClass;
-        const items = Array.from(
-            document.querySelectorAll('[dt-eid="yuan_edit_background"]'),
-        ).filter((el) => !el.hasAttribute("data-aov-custom-tile"));
-        if (!items.length) return null;
-
-        const classSets = items.map((el) => el.className.trim().split(/\s+/));
-        let common = new Set(classSets[0]);
-        for (let i = 1; i < classSets.length; i++) {
-            common = new Set(classSets[i].filter((c) => common.has(c)));
-        }
-        for (const classes of classSets) {
-            const extra = classes.filter((c) => !common.has(c));
-            if (extra.length) {
-                activeClass = extra[0];
-                break;
-            }
-        }
-        return activeClass;
-    }
-
-    function setCustomTileActive() {
-        const cls = detectActiveClassOnce();
-        if (!cls || !customTileEl) return;
-        document
-            .querySelectorAll('[dt-eid="yuan_edit_background"]')
-            .forEach((el) => {
-                if (el !== customTileEl) el.classList.remove(cls);
-            });
-        customTileEl.classList.add(cls);
-    }
-
-    function clearCustomTileActive() {
-        const cls = detectActiveClassOnce();
-        if (cls && customTileEl) {
-            customTileEl.classList.remove(cls);
-        }
-    }
 
     function applyBackgroundImage(blob) {
         const bgImg = findBackgroundImgEl();
@@ -365,13 +341,14 @@
             bgImg.style.left = "0";
         }
 
+        bgImg.removeAttribute("srcset");
+        bgImg.removeAttribute("sizes");
         bgImg.src = newUrl;
 
         if (lastAppliedObjectUrl && lastAppliedObjectUrl !== newUrl) {
             URL.revokeObjectURL(lastAppliedObjectUrl);
         }
         lastAppliedObjectUrl = newUrl;
-        customFullBlob = blob;
 
         return true;
     }
@@ -424,28 +401,59 @@
         grid.insertBefore(tile, grid.firstChild);
     }
 
-    document.addEventListener("click", (e) => {
-        const target = e.target.closest('[dt-eid="yuan_edit_background"]');
-        if (!target || target.hasAttribute("data-aov-custom-tile")) return;
-        clearCustomTileActive();
-    });
-
     injectUploadTile();
 
-    const gridParent = document.querySelector(".backgroundTab-kIWXv");
-    if (gridParent) {
-        new MutationObserver(() => {
-            injectUploadTile();
-        }).observe(gridParent, {
-            childList: true,
-            subtree: true,
-        });
-    }
+    document.addEventListener("click", (e) => {
+        const tile = e.target.closest(
+            ".camp-grid-list__item, [dt-eid='yuan_edit_background']",
+        );
+        if (
+            !tile ||
+            tile.hasAttribute("data-aov-upload-tile") ||
+            tile.querySelector("[data-aov-upload-tile]")
+        )
+            return;
+
+        if (lastAppliedObjectUrl) {
+            URL.revokeObjectURL(lastAppliedObjectUrl);
+            lastAppliedObjectUrl = null;
+        }
+
+        const thumbImg = tile.querySelector("img");
+        if (thumbImg && thumbImg.src) {
+            const bgImg = findBackgroundImgEl();
+            if (bgImg) {
+                const fullSrc = thumbImg.src.split("?")[0];
+                bgImg.src = fullSrc;
+            }
+        }
+    });
+
+    new MutationObserver(() => {
+        injectUploadTile();
+    }).observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
 
     // cmds
     function uploadFunction() {
         const uploadTile = document.querySelector("[data-aov-upload-tile]");
-        if (uploadTile) uploadTile.click();
+        if (uploadTile) {
+            uploadTile.click();
+        } else {
+            const tempInput = document.createElement("input");
+            tempInput.type = "file";
+            tempInput.accept = "image/*";
+            tempInput.style.display = "none";
+            tempInput.onchange = (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (file) openCropModal(file, applyBackgroundImage);
+                tempInput.remove();
+            };
+            document.body.appendChild(tempInput);
+            tempInput.click();
+        }
     }
     window.__AOV = {
         upload: uploadFunction,
@@ -454,11 +462,6 @@
         github: CONFIG.GITHUB,
     };
 
-    console.log("[AOV BG Uploader] Loaded!");
-    console.log(`%c📦 Version: ${CONFIG.VERSION}`, "color:#96909e;");
-    console.log(`%c👨‍💻 Author: ${CONFIG.AUTHOR}`, "color:#96909e;");
-    console.log(`%c🔗 GitHub: ${CONFIG.GITHUB}`, "color:#4ade80;");
-    console.log(`%c🔗 Website: ${CONFIG.WEBSITE}`, "color:#4ade80;");
     console.log("[AOV BG Uploader] Commands:");
     console.log("> __AOV.upload() -> mở upload");
 })();
