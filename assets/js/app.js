@@ -10,11 +10,10 @@
     const harDropzoneEmpty = document.getElementById("harDropzoneEmpty");
     const harDropzoneSelected = document.getElementById("harDropzoneSelected");
     const harDropzoneText = document.getElementById("harDropzoneText");
-    const harStatus = document.getElementById("harStatus");
     const playerUrl = document.getElementById("playerUrl");
     const pasteBtn = document.getElementById("pasteBtn");
 
-    let posterType = "player"; // "player" | "flowborn"
+    let posterType = "player";
     let inputMode = "link";
     let extractedUrl = null;
     let isProcessing = false;
@@ -91,8 +90,6 @@
         linkModeWrap.classList.toggle("hidden", !isLink);
         harModeWrap.classList.toggle("hidden", isLink);
         if (isLink) {
-            harStatus.textContent = "";
-            harStatus.className = "har-status";
             extractedUrl = null;
             harDropzoneEmpty.classList.remove("hidden");
             harDropzoneSelected.classList.add("hidden");
@@ -305,12 +302,17 @@
         });
     }
 
+    function resetHarDropzone() {
+        extractedUrl = null;
+        harFileInput.value = "";
+        harDropzoneEmpty.classList.remove("hidden");
+        harDropzoneSelected.classList.add("hidden");
+        harDropzoneText.textContent = "";
+    }
+
     function setHarFile(file) {
         if (isProcessing) {
             pendingFile = file;
-            harStatus.textContent =
-                "⏳ Đang xử lý file trước, sẽ chuyển sang file mới ngay sau đó...";
-            harStatus.className = "har-status";
             return;
         }
         isProcessing = true;
@@ -318,28 +320,27 @@
         harDropzoneText.textContent = "Đã chọn: " + file.name;
         harDropzoneEmpty.classList.add("hidden");
         harDropzoneSelected.classList.remove("hidden");
-        harStatus.textContent = "⏳ Đang xử lý...";
-        harStatus.className = "har-status";
         extractedUrl = null;
 
         extractLinkFromHar(file)
             .then((url) => {
                 extractedUrl = normalizeUrl(url);
-                if (extractedUrl) {
-                    harStatus.textContent =
-                        "✅ Đã tìm thấy link! Click 'Chuyển tới trang game' để vào.";
-                    harStatus.className = "har-status success";
-                } else {
-                    harStatus.textContent =
-                        "❌ Link không hợp lệ (chỉ hỗ trợ kgvn-camp.mobagarena.com)";
-                    harStatus.className = "har-status error";
-                    extractedUrl = null;
+                if (!extractedUrl) {
+                    resetHarDropzone();
+                    showModal(
+                        "File HAR không chứa liên kết hợp lệ! Vui lòng chọn file HAR khác.",
+                        "error",
+                    );
                 }
             })
             .catch((err) => {
-                harStatus.textContent = "❌ " + err.message;
-                harStatus.className = "har-status error";
-                extractedUrl = null;
+                resetHarDropzone();
+                showModal(
+                    "Lỗi đọc file HAR: " +
+                        err.message +
+                        ". Vui lòng chọn file khác.",
+                    "error",
+                );
             })
             .finally(() => {
                 isProcessing = false;
@@ -406,16 +407,16 @@
     }
 
     const modalOverlay = document.getElementById("modalOverlay");
-    const modalBox = document.getElementById("modalBox");
-    const modalIcon = document.getElementById("modalIcon");
+    const modalTitle = document.getElementById("modalTitle");
     const modalMessage = document.getElementById("modalMessage");
     const modalCloseBtn = document.getElementById("modalCloseBtn");
     const modalCloseX = document.getElementById("modalCloseX");
 
-    function showModal(message, type = "error") {
-        modalBox.className = "modal-box " + type;
-        modalIcon.textContent = type === "success" ? "✓" : "!";
-        modalMessage.textContent = message;
+    function showModal(message, type = "error", title = "Chú ý") {
+        if (modalTitle) {
+            modalTitle.textContent = type === "success" ? "Thông báo" : title;
+        }
+        if (modalMessage) modalMessage.textContent = message;
         modalOverlay.classList.add("show");
     }
 
@@ -428,43 +429,54 @@
     modalOverlay.addEventListener("click", (e) => {
         if (e.target === modalOverlay) closeModal();
     });
+    document.addEventListener("selectstart", (e) => e.preventDefault());
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && modalOverlay.classList.contains("show")) {
             closeModal();
         }
     });
 
-    document
-        .getElementById("copyInjectBtn")
-        .addEventListener("click", function () {
+    const copyBtn = document.getElementById("copyInjectBtn");
+    let copyTimeout = null;
+    const originalCopyHTML = copyBtn ? copyBtn.innerHTML : "";
+
+    if (copyBtn) {
+        copyBtn.addEventListener("click", function () {
             const injectCode = `javascript:(function(){const s=document.createElement("script");s.src="https://aov.honaki.site/assets/scripts/aov-bg-uploader.min.js?t="+Date.now();document.head.appendChild(s);})();`;
-            navigator.clipboard
-                .writeText(injectCode)
-                .then(() => {
-                    const originalText = this.textContent;
-                    this.textContent = "✅ Đã copy!";
-                    this.style.borderColor = "#6fcf97";
-                    this.style.color = "#6fcf97";
-                    setTimeout(() => {
-                        this.textContent = originalText;
-                        this.style.borderColor = "";
-                        this.style.color = "";
-                    }, 2000);
-                })
-                .catch(() => {
-                    const input = document.createElement("input");
-                    input.value = injectCode;
-                    document.body.appendChild(input);
-                    input.select();
-                    document.execCommand("copy");
-                    input.remove();
-                    const originalText = this.textContent;
-                    this.textContent = "✅ Đã copy!";
-                    setTimeout(() => {
-                        this.textContent = originalText;
-                    }, 2000);
-                });
+
+            function onCopySuccess() {
+                clearTimeout(copyTimeout);
+                copyBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Đã copy!</span>
+                `;
+                copyTimeout = setTimeout(() => {
+                    copyBtn.innerHTML = originalCopyHTML;
+                }, 2000);
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard
+                    .writeText(injectCode)
+                    .then(onCopySuccess)
+                    .catch(() => fallbackCopy(injectCode, onCopySuccess));
+            } else {
+                fallbackCopy(injectCode, onCopySuccess);
+            }
         });
+    }
+
+    function fallbackCopy(text, callback) {
+        const input = document.createElement("input");
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+        if (callback) callback();
+    }
 
     document
         .getElementById("goToGameBtn")

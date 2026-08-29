@@ -1,27 +1,24 @@
 <!doctype html>
-<html lang="vi">
+<html lang="vi" class="lang-vn">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta
             http-equiv="Cache-Control"
-            content="no-cache, no-store, must-revalidate"
+            content="no-cache, no-store, must-revalidate, max-age=0"
         />
         <meta http-equiv="Pragma" content="no-cache" />
         <meta http-equiv="Expires" content="0" />
         <title>Đổi ảnh load trận LQM</title>
 
-        <!-- Start: Favicon -->
         <link rel="icon" href="assets/imgs/favicon.ico" type="image/x-icon" />
         <link rel="apple-touch-icon" href="assets/imgs/favicon.ico" />
-        <!-- End: Favicon -->
 
         <meta
             name="description"
             content="Công cụ đổi ảnh loading trận Liên Quân Mobile."
         />
 
-        <!-- Start: Open Graph -->
         <meta property="og:title" content="Đổi ảnh load trận LQM" />
         <meta
             property="og:description"
@@ -46,9 +43,7 @@
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Honaki Poster Studio" />
         <meta property="og:locale" content="vi_VN" />
-        <!-- End: Open Graph -->
 
-        <!-- Start: Twitter Card -->
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Đổi ảnh load trận LQM" />
         <meta
@@ -59,75 +54,182 @@
             name="twitter:image"
             content="https://aov.honaki.site/assets/imgs/preview.jpg"
         />
-        <!-- End: Twitter Card -->
 
-        <meta name="theme-color" content="#005b96" />
+        <meta name="theme-color" content="#5056ac" />
 
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
-            rel="stylesheet"
+            rel="preload"
+            as="font"
+            type="font/ttf"
+            crossorigin="anonymous"
+            href="assets/fonts/CalSans-Regular.ttf"
         />
-        <link rel="stylesheet" href="assets/css/style.css" />
+        <link rel="stylesheet" href="assets/css/style.css?v=1.0.1" />
     </head>
     <body>
-        <div class="modal-overlay" id="modalOverlay">
-            <div class="modal-box" id="modalBox">
-                <button class="modal-close-x" id="modalCloseX">×</button>
-                <div class="modal-icon" id="modalIcon"></div>
+        <div class="bodyMask">
+            <img
+                src="assets/imgs/background/left-mask.png"
+                alt=""
+                draggable="false"
+                class="bodyMaskLeft"
+            />
+            <img
+                src="assets/imgs/background/middle-mask.png"
+                alt=""
+                draggable="false"
+                class="bodyMaskMiddle"
+            />
+            <img
+                src="assets/imgs/background/right-mask.png"
+                alt=""
+                draggable="false"
+                class="bodyMaskRight"
+            />
+        </div>
 
-                <div class="modal-message" id="modalMessage"></div>
-                <button class="modal-close-btn" id="modalCloseBtn">Đóng</button>
+        <div class="camp-poster-page-layout__mask">
+            <div class="camp-poster-page-layout__mask-top-left">
+                <img
+                    src="assets/imgs/background/mask-top-left.png"
+                    alt=""
+                    draggable="false"
+                />
+            </div>
+            <div class="camp-poster-page-layout__mask-bottom-right">
+                <img
+                    src="assets/imgs/background/mask-bottom-right.png"
+                    alt=""
+                    draggable="false"
+                />
             </div>
         </div>
-        <div class="wrap">
-            <div class="grid">
-                <div class="panel">
-                    <div class="field">
-                        <label>Xác Thực Tài Khoản</label>
-                        <div class="share-options">
+
+        <div class="camp-poster-editor-layout__mask-gradient-left"></div>
+
+        <div class="adm-mask" id="modalOverlay" aria-hidden="true">
+            <div class="adm-mask-content">
+                <div class="camp-game-model">
+                    <div class="camp-game-model__container" id="modalBox">
+                        <div class="camp-game-model__close" id="modalCloseX">
+                            <div
+                                class="camp-game-model__close-icon camp-image--protected tica-image"
+                            >
+                                <img
+                                    src="assets/imgs/modal/close-icon.png"
+                                    width="20"
+                                    height="20"
+                                    draggable="false"
+                                    class="tica-image-img"
+                                    alt="Close"
+                                />
+                            </div>
+                        </div>
+                        <div class="camp-game-model__header">
+                            <div
+                                class="camp-game-model__header-bg camp-image--protected tica-image"
+                            >
+                                <img
+                                    src="assets/imgs/modal/model-top-bg.png"
+                                    draggable="false"
+                                    class="tica-image-img"
+                                    alt=""
+                                />
+                            </div>
+                            <div class="camp-game-model__title" id="modalTitle">
+                                Chú ý
+                            </div>
+                        </div>
+                        <div class="camp-game-model__content">
+                            <div id="modalMessage"></div>
+                        </div>
+                        <div class="camp-game-model__footer">
                             <button
                                 type="button"
-                                class="share-option active"
-                                id="modeLinkBtn"
+                                class="btn-primary camp-game-model__btn"
+                                id="modalCloseBtn"
                             >
-                                <span class="share-option-title"
-                                    >Link CAMP</span
-                                >
-                            </button>
-                            <button
-                                type="button"
-                                class="share-option"
-                                id="modeHarBtn"
-                            >
-                                <span class="share-option-title">File HAR</span>
+                                <span>Xác nhận</span>
                             </button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <div class="field">
-                        <div id="linkModeWrap">
-                            <div class="field-label-row">
-                                <label for="playerUrl">Link Poster</label>
-                                <button
-                                    type="button"
-                                    class="paste-btn"
-                                    id="pasteBtn"
-                                >
-                                    Dán
-                                </button>
-                            </div>
-                            <textarea
-                                id="playerUrl"
-                                rows="3"
-                                placeholder="https://kgvn-camp.mobagarena.com/app/player-poster?..."
-                            ></textarea>
+        <div class="app-container">
+            <div class="app-card">
+                <div class="camp-with-title">
+                    <div class="camp-with-title__title">Xác Thực Tài Khoản</div>
+                    <div class="camp-with-title__content">
+                        <div class="tab-group">
+                            <button
+                                type="button"
+                                class="tab-btn active"
+                                id="modeLinkBtn"
+                            >
+                                <span class="tab-title">Link CAMP</span>
+                            </button>
+                            <button
+                                type="button"
+                                class="tab-btn"
+                                id="modeHarBtn"
+                            >
+                                <span class="tab-title">File HAR</span>
+                            </button>
                         </div>
+                    </div>
+                </div>
 
-                        <div id="harModeWrap" class="hidden">
-                            <label for="harFileInput">File HAR</label>
-                            <div class="dropzone" id="harDropzone">
+                <div class="camp-with-title">
+                    <div id="linkModeWrap">
+                        <div class="camp-with-title__title">
+                            <span>Link Poster</span>
+                            <button
+                                type="button"
+                                class="paste-btn"
+                                id="pasteBtn"
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="12"
+                                    height="12"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <rect
+                                        x="9"
+                                        y="9"
+                                        width="13"
+                                        height="13"
+                                        rx="2"
+                                        ry="2"
+                                    ></rect>
+                                    <path
+                                        d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                                    ></path>
+                                </svg>
+                                Dán
+                            </button>
+                        </div>
+                        <div class="camp-with-title__content">
+                            <div>
+                                <textarea
+                                    class="camp-game-textarea"
+                                    id="playerUrl"
+                                    placeholder="https://kgvn-camp.mobagarena.com/app/player-poster?..."
+                                ></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="harModeWrap" class="hidden">
+                        <div class="camp-with-title__title">File HAR</div>
+                        <div class="camp-with-title__content">
+                            <div class="file-dropzone" id="harDropzone">
                                 <div id="harDropzoneEmpty">
                                     <div>
                                         <strong>Chọn file .har</strong> hoặc kéo
@@ -136,12 +238,7 @@
                                 </div>
                                 <div id="harDropzoneSelected" class="hidden">
                                     <strong id="harDropzoneText"></strong>
-                                    <div
-                                        style="
-                                            margin-top: 4px;
-                                            font-size: 11.5px;
-                                        "
-                                    >
+                                    <div class="file-dropzone-subtext">
                                         Bấm hoặc kéo thả để chọn file khác
                                     </div>
                                 </div>
@@ -151,61 +248,95 @@
                                     accept=".har,.json,application/json,text/plain,text/json,*/*"
                                 />
                             </div>
-                            <div id="harStatus" class="har-status"></div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="divider"></div>
-
-                    <div
-                        style="display: flex; gap: 10px; flex-direction: column"
+                <div style="display: flex; gap: 10px; flex-direction: column">
+                    <button
+                        class="btn-ghost"
+                        id="copyInjectBtn"
+                        style="width: 100%; font-size: 12px"
                     >
-                        <button
-                            class="btn-ghost"
-                            id="copyInjectBtn"
-                            style="width: 100%; font-size: 12px"
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="14"
+                            height="14"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            style="margin-right: 6px"
                         >
-                            Copy Code Inject
+                            <rect
+                                x="9"
+                                y="9"
+                                width="13"
+                                height="13"
+                                rx="2"
+                                ry="2"
+                            ></rect>
+                            <path
+                                d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                            ></path>
+                        </svg>
+                        Copy Code Inject
+                    </button>
+                    <div class="tab-group">
+                        <button
+                            type="button"
+                            class="tab-btn active"
+                            id="typePlayerBtn"
+                        >
+                            <span class="tab-title">Ảnh Load Trận</span>
                         </button>
-                        <div class="share-options">
-                            <button
-                                type="button"
-                                class="share-option active"
-                                id="typePlayerBtn"
-                            >
-                                <span class="share-option-title"
-                                    >Ảnh Load Trận</span
-                                >
-                            </button>
-                            <button
-                                type="button"
-                                class="share-option"
-                                id="typeFlowbornBtn"
-                            >
-                                <span class="share-option-title"
-                                    >Ảnh Load Flowborn</span
-                                >
-                            </button>
-                        </div>
-                        <button class="btn-primary" id="goToGameBtn">
-                            Chuyển tới trang game
+                        <button
+                            type="button"
+                            class="tab-btn"
+                            id="typeFlowbornBtn"
+                        >
+                            <span class="tab-title">Ảnh Load Flowborn</span>
                         </button>
                     </div>
+                    <button class="btn-primary" id="goToGameBtn">
+                        <span>Chuyển tới trang game</span>
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="16"
+                            height="16"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            style="margin-left: 6px"
+                        >
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
                 </div>
             </div>
 
-            <div class="footnote">
-                Made by
+            <div class="footer-credit">
+                <span>Made with</span>
+                <span class="footer-heart">♥</span>
+                <span>by</span>
                 <a
-                    style="font-weight: 700"
                     target="_blank"
+                    rel="noopener noreferrer"
                     href="https://fb.com/honaki10"
+                    class="footer-author"
                     >Honaki</a
                 >
-                with <span style="color: red">♥</span>
             </div>
         </div>
 
-        <script src="assets/js/app.js"></script>
+        <script>
+            const s = document.createElement("script");
+            s.src = "assets/js/app.js?t=" + Date.now();
+            document.body.appendChild(s);
+        </script>
     </body>
 </html>

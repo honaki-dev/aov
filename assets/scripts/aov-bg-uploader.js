@@ -436,7 +436,6 @@
         subtree: true,
     });
 
-    // cmds
     function uploadFunction() {
         const uploadTile = document.querySelector("[data-aov-upload-tile]");
         if (uploadTile) {
