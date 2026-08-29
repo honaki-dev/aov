@@ -102,9 +102,8 @@
     modeLinkBtn.addEventListener("click", () => setMode("link"));
     modeHarBtn.addEventListener("click", () => setMode("har"));
 
-    harDropzone.addEventListener("click", () => {
+    harFileInput.addEventListener("click", () => {
         harFileInput.value = "";
-        harFileInput.click();
     });
 
     const API_POSTER_KEYWORD = "kgvn-api.mobagarena.com/api/game/poster";
@@ -152,7 +151,6 @@
     function getParamValue(entry, key) {
         const aliases = HEADER_ALIASES[key] || [key];
 
-        // 1. Kiểm tra request headers
         const headers = entry?.request?.headers;
         if (Array.isArray(headers)) {
             for (const alias of aliases) {
@@ -170,7 +168,6 @@
             }
         }
 
-        // 2. Kiểm tra queryString trong request
         const query = entry?.request?.queryString;
         if (Array.isArray(query)) {
             for (const alias of aliases) {
@@ -189,7 +186,6 @@
             }
         }
 
-        // 3. Kiểm tra query params trên URL
         try {
             if (entry?.request?.url) {
                 const parsed = new URL(entry.request.url);
@@ -220,7 +216,6 @@
             return null;
         }
 
-        // Đính kèm thêm các param phụ nếu có
         for (const key of Object.keys(HEADER_ALIASES)) {
             if (!REQUIRED_PARAMS.includes(key)) {
                 const value = getParamValue(entry, key);
@@ -239,7 +234,6 @@
     }
 
     function findCampUrlFromHarEntries(entries) {
-        // 1. Kiểm tra nếu có request trực tiếp chứa đầy đủ link CAMP + itopencodeparam
         for (const e of entries) {
             const u = e.request?.url || "";
             if (
@@ -252,14 +246,12 @@
             }
         }
 
-        // 2. Tìm và ghép từ request API poster
         const apiEntries = entries.filter((e) => {
             const url = (e.request?.url || "").toLowerCase();
             return url.includes(API_POSTER_KEYWORD);
         });
         if (apiEntries.length === 0) return null;
 
-        // Ưu tiên: POST request và status OK
         apiEntries.sort((a, b) => {
             const aPost =
                 (a.request?.method || "").toUpperCase() === "POST" ? 1 : 0;
