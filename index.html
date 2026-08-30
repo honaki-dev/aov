@@ -150,21 +150,24 @@
     <body>
         <div class="bodyMask">
             <img
-                src="assets/imgs/background/left-mask.png"
+                src="assets/imgs/background/left-mask.webp"
                 alt=""
                 draggable="false"
+                decoding="async"
                 class="bodyMaskLeft"
             />
             <img
-                src="assets/imgs/background/middle-mask.png"
+                src="assets/imgs/background/middle-mask.webp"
                 alt=""
                 draggable="false"
+                decoding="async"
                 class="bodyMaskMiddle"
             />
             <img
-                src="assets/imgs/background/right-mask.png"
+                src="assets/imgs/background/right-mask.webp"
                 alt=""
                 draggable="false"
+                decoding="async"
                 class="bodyMaskRight"
             />
         </div>
@@ -172,16 +175,18 @@
         <div class="camp-poster-page-layout__mask">
             <div class="camp-poster-page-layout__mask-top-left">
                 <img
-                    src="assets/imgs/background/mask-top-left.png"
+                    src="assets/imgs/background/mask-top-left.webp"
                     alt=""
                     draggable="false"
+                    decoding="async"
                 />
             </div>
             <div class="camp-poster-page-layout__mask-bottom-right">
                 <img
-                    src="assets/imgs/background/mask-bottom-right.png"
+                    src="assets/imgs/background/mask-bottom-right.webp"
                     alt=""
                     draggable="false"
+                    decoding="async"
                 />
             </div>
         </div>
@@ -197,10 +202,11 @@
                                 class="camp-game-model__close-icon camp-image--protected tica-image"
                             >
                                 <img
-                                    src="assets/imgs/modal/close-icon.png"
+                                    src="assets/imgs/modal/close-icon.webp"
                                     width="20"
                                     height="20"
                                     draggable="false"
+                                    decoding="async"
                                     class="tica-image-img"
                                     alt="Close"
                                 />
@@ -211,8 +217,9 @@
                                 class="camp-game-model__header-bg camp-image--protected tica-image"
                             >
                                 <img
-                                    src="assets/imgs/modal/model-top-bg.png"
+                                    src="assets/imgs/modal/model-top-bg.webp"
                                     draggable="false"
+                                    decoding="async"
                                     class="tica-image-img"
                                     alt=""
                                 />
@@ -562,7 +569,23 @@
                             faqItems.forEach((i) =>
                                 i.classList.remove("active"),
                             );
-                            if (!isActive) item.classList.add("active");
+                            if (!isActive) {
+                                item.classList.add("active");
+                            } else {
+                                requestAnimationFrame(() => {
+                                    const maxScroll = Math.max(
+                                        0,
+                                        document.documentElement.scrollHeight -
+                                            window.innerHeight,
+                                    );
+                                    if (window.scrollY > maxScroll) {
+                                        window.scrollTo({
+                                            top: maxScroll,
+                                            behavior: "smooth",
+                                        });
+                                    }
+                                });
+                            }
                         });
                     }
                 });

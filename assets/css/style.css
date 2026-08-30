@@ -6,92 +6,6 @@
     font-display: swap;
 }
 
-@font-face {
-    font-family: "DIN Next LT Pro";
-    src: url("../fonts/DINNextLTProCondensedMini.ttf") format("truetype");
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
-:root {
-    --font-default: "Cal Sans";
-    --safe-area-inset-right: env(safe-area-inset-right, 0px);
-    --safe-area-inset-left: env(safe-area-inset-left, 0px);
-
-    --adm-radius-s: 4px;
-    --adm-radius-m: 8px;
-    --adm-radius-l: 12px;
-    --adm-font-size-1: 9px;
-    --adm-font-size-2: 10px;
-    --adm-font-size-3: 11px;
-    --adm-font-size-4: 12px;
-    --adm-font-size-5: 13px;
-    --adm-font-size-6: 14px;
-    --adm-font-size-7: 15px;
-    --adm-font-size-8: 16px;
-    --adm-font-size-9: 17px;
-    --adm-font-size-10: 18px;
-    --adm-color-primary: #1677ff;
-    --adm-color-success: #00b578;
-    --adm-color-warning: #ff8f1f;
-    --adm-color-danger: #ff3141;
-    --adm-color-yellow: #ff9f18;
-    --adm-color-orange: #ff6430;
-    --adm-color-wathet: #e7f1ff;
-    --adm-color-text: #333;
-    --adm-color-text-secondary: #666;
-    --adm-color-weak: #999;
-    --adm-color-light: #ccc;
-    --adm-color-border: #eee;
-    --adm-color-background: #fff;
-    --adm-color-highlight: var(--adm-color-danger);
-    --adm-color-white: #fff;
-    --adm-color-box: #f5f5f5;
-    --adm-color-text-light-solid: var(--adm-color-white);
-    --adm-color-text-dark-solid: #000;
-    --adm-color-fill-content: var(--adm-color-box);
-    --adm-font-size-main: var(--adm-font-size-5);
-    --adm-font-family:
-        "Cal Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
-        "Helvetica Neue", sans-serif;
-    --adm-border-color: var(--adm-color-border);
-
-    --bg-dark: #5056ac;
-    --bg-surface: #414798;
-    --card-bg: rgba(20, 23, 48, 0.88);
-    --card-alt: #1a1e3d;
-    --card-border: rgba(255, 216, 115, 0.18);
-    --card-border-glow: rgba(240, 185, 63, 0.35);
-    --card-border-subtle: #2d3460;
-
-    --gold-bright: #ffe182;
-    --gold-primary: #f0b93f;
-    --gold-deep: #d49826;
-    --gold-glow: rgba(240, 185, 63, 0.22);
-    --gold-gradient: linear-gradient(180deg, #ffe182 0%, #f0b93f 100%);
-    --gold-gradient-hover: linear-gradient(180deg, #fff0a8 0%, #f7c54e 100%);
-
-    --text: #f5f3ec;
-    --text-muted: #8d95ab;
-    --text-dim: #5c647d;
-
-    --success: var(--adm-color-success);
-    --danger: var(--adm-color-danger);
-    --warning: var(--adm-color-warning);
-
-    --radius-sm: var(--adm-radius-s);
-    --radius-md: var(--adm-radius-m);
-    --radius-lg: var(--adm-radius-l);
-    --radius-card: 16px;
-    --radius-pill: 999px;
-
-    --shadow-card:
-        0 20px 50px -10px rgba(0, 0, 0, 0.6),
-        0 0 35px -5px rgba(240, 185, 63, 0.08);
-}
-
 *,
 *::before,
 *::after {
@@ -119,11 +33,44 @@ img {
     -webkit-user-select: none !important;
 }
 
-html,
-body {
-    height: 100%;
+html {
+    min-height: 100%;
+    min-height: 100dvh;
     overflow-x: hidden;
-    overscroll-behavior: none;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    background: linear-gradient(180deg, #353994 0%, #555bb0 100%);
+    background-attachment: fixed;
+    color: #f5f3ec;
+    font-family:
+        "Cal Sans",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        "Oxygen",
+        "Ubuntu",
+        "Cantarell",
+        "Fira Sans",
+        "Droid Sans",
+        "Helvetica Neue",
+        sans-serif;
+    letter-spacing: 0.055em;
+    word-spacing: 0.06em;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
 }
@@ -132,7 +79,6 @@ html.lang-vn,
 html.lang-vn body {
     letter-spacing: 0.055em;
     word-spacing: 0.06em;
-    --font-default: "Cal Sans";
     font-family:
         "Cal Sans",
         -apple-system,
@@ -148,30 +94,12 @@ html.lang-vn body {
         sans-serif;
 }
 
-body {
-    margin: 0;
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: flex;
-    position: relative;
-    background: linear-gradient(180deg, #353994 0%, #555bb0 100%);
-    color: var(--text);
-    font-family: var(--adm-font-family);
-    letter-spacing: 0.055em;
-    word-spacing: 0.06em;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
 .bodyMask {
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0;
     z-index: 0;
-    min-height: 300px;
-    height: 100%;
     width: 100%;
+    height: 100%;
     overflow: hidden;
     pointer-events: none;
 }
@@ -224,8 +152,7 @@ body {
     width: 100%;
     height: 100%;
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0;
     overflow: hidden;
 }
 
@@ -242,7 +169,7 @@ body {
     object-position: top left;
     max-width: 440px;
     width: 32vw;
-    min-width: 200px;
+    min-width: 180px;
     pointer-events: none;
     user-select: none;
 }
@@ -260,7 +187,7 @@ body {
     object-position: bottom right;
     max-width: 440px;
     width: 32vw;
-    min-width: 200px;
+    min-width: 180px;
     pointer-events: none;
     user-select: none;
 }
@@ -282,10 +209,10 @@ body {
 
 .app-container {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     max-width: 500px;
     width: 100%;
-    margin: auto;
+    margin: auto 0;
     padding: 36px 20px;
 }
 
@@ -300,8 +227,30 @@ body {
     .app-container {
         padding: 24px 16px;
     }
-    .app-card {
-        padding: 0;
+    .camp-poster-editor-layout__mask-gradient-left {
+        width: 80px;
+        opacity: 0.4;
+    }
+    .camp-poster-page-layout__mask-top-left img,
+    .camp-poster-page-layout__mask-bottom-right img {
+        max-width: 130px;
+        min-width: 90px;
+        opacity: 0.65;
+    }
+    .bodyMask > .bodyMaskLeft {
+        width: 160px;
+        height: 130px;
+        opacity: 0.55;
+    }
+    .bodyMask > .bodyMaskRight {
+        width: 150px;
+        height: 120px;
+        opacity: 0.55;
+    }
+    .bodyMask > .bodyMaskMiddle {
+        width: 280px;
+        height: 240px;
+        opacity: 0.45;
     }
 }
 
@@ -311,11 +260,11 @@ body {
 
 .field label {
     display: block;
-    font-size: var(--adm-font-size-3);
+    font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--text-muted);
+    color: #8d95ab;
     margin-bottom: 8px;
 }
 
@@ -337,12 +286,12 @@ body {
     background: rgba(255, 255, 255, 0.16);
     border: none;
     color: rgba(255, 255, 255, 0.85);
-    font-size: var(--adm-font-size-2);
+    font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     padding: 4px 10px;
-    border-radius: var(--adm-radius-s);
+    border-radius: 4px;
     cursor: pointer;
     transition: opacity 0.15s ease;
 }
@@ -366,7 +315,7 @@ body {
     color: rgba(255, 255, 255, 0.75);
     background: rgba(255, 255, 255, 0.16);
     border: none;
-    border-radius: var(--adm-radius-s);
+    border-radius: 4px;
     padding: 10px 12px;
     cursor: pointer;
     user-select: none;
@@ -389,7 +338,7 @@ body {
 }
 
 .tab-title {
-    font-size: var(--adm-font-size-5);
+    font-size: 13px;
     font-weight: 500;
     color: inherit;
     text-align: center;
@@ -428,7 +377,7 @@ body {
     resize: none;
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: var(--adm-radius-s);
+    border-radius: 4px;
     outline: none;
     width: 100%;
     min-height: 84px;
@@ -453,12 +402,12 @@ body {
 }
 
 .camp-game-textarea::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .camp-game-textarea:focus {
     background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.6);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .camp-game-textarea--unavailable {
@@ -471,9 +420,9 @@ body {
     width: 100%;
     min-height: 84px;
     height: 84px;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: var(--adm-radius-s);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px dashed rgba(255, 255, 255, 0.35);
+    border-radius: 4px;
     padding: 10px 12px;
     display: flex;
     flex-direction: column;
@@ -504,7 +453,7 @@ body {
 
 .file-dropzone-subtext {
     margin-top: 2px;
-    font-size: var(--adm-font-size-3);
+    font-size: 11px;
     color: rgba(255, 255, 255, 0.6);
 }
 
@@ -520,7 +469,7 @@ body {
 
 .divider {
     height: 1px;
-    background: var(--card-border-subtle);
+    background: #2d3460;
     margin: 20px 0;
 }
 
@@ -528,7 +477,7 @@ button {
     font-family: inherit;
     cursor: pointer;
     border: none;
-    border-radius: var(--adm-radius-s);
+    border-radius: 4px;
     padding: 12px 18px;
     font-size: 14px;
     font-weight: 500;
@@ -546,9 +495,9 @@ button {
     position: relative;
     color: #ffffff;
     background:
-        url(../imgs/buttons/primary-decorate.png) 50% / contain no-repeat,
+        url(../imgs/buttons/primary-decorate.webp) 50% / contain no-repeat,
         linear-gradient(#bf8357 0%, #dfb16d 100%);
-    border-radius: var(--adm-radius-s);
+    border-radius: 4px;
     box-shadow:
         inset 0 1px #dca369,
         inset 0 -2px #ffcb78;
@@ -570,9 +519,9 @@ button {
     min-height: 40px;
     color: #ffffff;
     background:
-        url(../imgs/buttons/secondary-decorate.png) 50% / contain no-repeat,
+        url(../imgs/buttons/secondary-decorate.webp) 50% / contain no-repeat,
         linear-gradient(#5867c0 0%, #7b9be6 100%);
-    border-radius: var(--adm-radius-s);
+    border-radius: 4px;
     box-shadow:
         inset 0 1px #688cdb,
         inset 0 -2px #80abff;

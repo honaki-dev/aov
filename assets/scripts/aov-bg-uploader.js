@@ -350,7 +350,7 @@
                     height: 38px;
                     color: #ffffff;
                     background:
-                        url(https://aov.honaki.site/assets/imgs/buttons/secondary-decorate.png) 50% / contain no-repeat,
+                        url(https://aov.honaki.site/assets/imgs/buttons/secondary-decorate.webp) 50% / contain no-repeat,
                         linear-gradient(#5867c0 0%, #7b9be6 100%);
                     box-shadow: inset 0 1px #688cdb, inset 0 -2px #80abff;
                     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -362,7 +362,7 @@
                     height: 38px;
                     color: #ffffff;
                     background:
-                        url(https://aov.honaki.site/assets/imgs/buttons/primary-decorate.png) 50% / contain no-repeat,
+                        url(https://aov.honaki.site/assets/imgs/buttons/primary-decorate.webp) 50% / contain no-repeat,
                         linear-gradient(#bf8357 0%, #dfb16d 100%);
                     box-shadow: inset 0 1px #dca369, inset 0 -2px #ffcb78;
                     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -374,11 +374,11 @@
                 <div class="camp-game-model">
                     <div class="camp-game-model__container">
                         <div class="camp-game-model__close" id="btnModalClose">
-                            <img src="https://aov.honaki.site/assets/imgs/modal/close-icon.png" alt="Close" />
+                            <img src="https://aov.honaki.site/assets/imgs/modal/close-icon.webp" alt="Close" />
                         </div>
                         <div class="camp-game-model__header">
                             <div class="camp-game-model__header-bg">
-                                <img src="https://aov.honaki.site/assets/imgs/modal/model-top-bg.png" alt="" />
+                                <img src="https://aov.honaki.site/assets/imgs/modal/model-top-bg.webp" alt="" />
                             </div>
                             <div class="camp-game-model__title">Chỉnh ảnh nền</div>
                         </div>
