@@ -45,6 +45,10 @@
                     ? "/app/flowborn-poster"
                     : "/app/player-poster";
             parsed.pathname = targetPath;
+            if (type === "flowborn") {
+                parsed.searchParams.delete("heroJob");
+                parsed.searchParams.delete("herojob");
+            }
             return parsed.toString();
         } catch {
             return url;
@@ -324,8 +328,10 @@
 
         extractLinkFromHar(file)
             .then((url) => {
-                extractedUrl = normalizeUrl(url);
-                if (!extractedUrl) {
+                const normalized = normalizeUrl(url);
+                if (normalized) {
+                    extractedUrl = applyPosterTypeToUrl(normalized, posterType);
+                } else {
                     resetHarDropzone();
                     showModal(
                         "File HAR không chứa liên kết hợp lệ của hệ thống AOV Camp. Vui lòng chọn file HAR khác.",
