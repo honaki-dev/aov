@@ -87,7 +87,7 @@
                     "price": "0",
                     "priceCurrency": "VND"
                 },
-                "description": "Công cụ tùy chỉnh và đổi ảnh loading trận Liên Quân Mobile (AOV) trực tuyến miễn phí và an toàn.",
+                "description": "Công cụ tùy chỉnh và đổi ảnh loading trận Liên Quân Mobile trực tuyến miễn phí và an toàn.",
                 "author": {
                     "@type": "Person",
                     "name": "Honaki Tran",
@@ -104,26 +104,34 @@
                 "mainEntity": [
                     {
                         "@type": "Question",
-                        "name": "Cơ chế hoạt động của công cụ này là gì?",
+                        "name": "Hướng dẫn cách đổi Ảnh Load Trận & Ảnh Load Flowborn?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Đây là công cụ tiện ích cộng đồng do Honaki phát triển độc lập, hoạt động theo cơ chế Client-side Script Injection (Bookmarklet). Bạn dùng link hoặc file HAR để mở giao diện Poster trên trình duyệt, sau đó chạy đoạn mã Script để chèn thêm tính năng tải ảnh tùy chỉnh từ thiết bị."
+                            "text": "Đối với Ảnh Load Trận: Bạn dán Link hoặc chọn File HAR rồi bấm Chuyển tới trang game, sau đó chạy Code Inject (Bookmarklet) để nút tải ảnh xuất hiện và áp dụng ảnh mới. Đối với Ảnh Load Flowborn: Bạn chọn tab Ảnh Load Flowborn và chuyển tới trang game, BẮT BUỘC PHẢI TẠO MỘT NHÃN DÁN (STICKER) MỚI trước, sau đó mới chạy Code Inject để nút đổi ảnh xuất hiện và áp dụng như bình thường."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "Công cụ có thuộc quản lý của Garena không?",
+                        "name": "Công cụ này có thuộc Garena không & Tuyên bố bản quyền ra sao?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Không. Đây là dự án cá nhân phi chính thức do Honaki phát triển độc lập cho cộng đồng, hoàn toàn không liên kết hay thuộc quyền quản lý của Garena hoặc Tencent/TiMi Studios."
+                            "text": "Tuyên bố sở hữu trí tuệ: Liên Quân Mobile, Arena of Valor và AOV Camp là các thương hiệu và tài sản trí tuệ thuộc quyền sở hữu của Garena và Tencent Games / TiMi Studio Group. Dự án phi thương mại: Đây là công cụ tiện ích cá nhân do Honaki tự nghiên cứu và phát triển độc lập nhằm hỗ trợ người chơi, hoàn toàn không có mục đích thương mại, không liên kết, không thuộc quyền quản lý hay được ủy quyền bởi nhà phát hành."
                         }
                     },
                     {
                         "@type": "Question",
-                        "name": "Đổi ảnh có an toàn không và web có lưu trữ token không?",
+                        "name": "Đổi ảnh load trận Liên Quân có an toàn và có bị khóa nick không?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Hoàn toàn an toàn. Script chỉ chạy trên trình duyệt (Client-side Javascript), không sửa đổi file cài đặt APK/IPA của game. Máy chủ không lưu trữ bất kỳ file HAR, token hay thông tin đăng nhập nào."
+                            "text": "Cảnh báo có rủi ro: Mặc dù đoạn mã Script chỉ thực thi cục bộ trên trình duyệt (Client-side), hiện tại nhà phát hành game đã bắt đầu áp dụng các chính sách rà soát và có thể áp dụng án phạt/khóa tài khoản đối với các hành vi can thiệp tùy chỉnh ảnh poster. Bạn nên cân nhắc kỹ trước khi trải nghiệm và tự chịu trách nhiệm đối với tài khoản game cá nhân của mình."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Web có lưu trữ Token hay thông tin tài khoản không?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Không bao giờ. Mọi tác vụ phân tích file HAR, bóc tách token hoặc tạo URL đều xử lý trực tiếp trên trình duyệt của bạn. Hệ thống máy chủ không lưu trữ bất kỳ dữ liệu cá nhân hay file tải lên nào."
                         }
                     }
                 ]
@@ -422,8 +430,8 @@
                             <div class="faq-item">
                                 <button type="button" class="faq-question">
                                     <span
-                                        >1. Cơ chế hoạt động của công cụ này là
-                                        gì?</span
+                                        >1. Hướng dẫn cách đổi Ảnh Load Trận &
+                                        Ảnh Load Flowborn?</span
                                     >
                                     <svg
                                         class="faq-chevron"
@@ -445,39 +453,84 @@
                                         Client-side Script Injection
                                     </div>
                                     <p>
-                                        Đây là công cụ tiện ích cộng đồng do
+                                        Dự án tiện ích do
                                         <strong>Honaki</strong> phát triển độc
-                                        lập:
+                                        lập. Cách thực hiện cho từng loại:
                                     </p>
-                                    <ol class="faq-steps">
-                                        <li>
-                                            Web hỗ trợ bạn tạo đường link chuyển
-                                            hướng mở giao diện Poster của tài
-                                            khoản trên trình duyệt.
-                                        </li>
-                                        <li>
-                                            Đoạn
-                                            <strong
-                                                >Code Inject
-                                                (Bookmarklet)</strong
-                                            >
-                                            sẽ chèn thêm giao diện tải ảnh tùy
-                                            chỉnh vào webview.
-                                        </li>
-                                        <li>
-                                            Khi bạn chọn và crop ảnh, script sẽ
-                                            áp dụng trực tiếp lên layer nền của
-                                            trang poster.
-                                        </li>
-                                    </ol>
+
+                                    <div style="margin-top: 8px">
+                                        <strong style="color: #ffd873"
+                                            >Đối với Ảnh Load Trận:</strong
+                                        >
+                                        <ol class="faq-steps">
+                                            <li>
+                                                Dán Link hoặc chọn File HAR ➔
+                                                Bấm
+                                                <strong
+                                                    >Chuyển tới trang
+                                                    game</strong
+                                                >.
+                                            </li>
+                                            <li>
+                                                Tại trang webview poster, dán và
+                                                chạy đoạn
+                                                <strong
+                                                    >Code Inject
+                                                    (Bookmarklet)</strong
+                                                >.
+                                            </li>
+                                            <li>
+                                                Nút tải ảnh sẽ xuất hiện ngay để
+                                                bạn chọn, crop và áp dụng ảnh
+                                                mới.
+                                            </li>
+                                        </ol>
+                                    </div>
+
+                                    <div style="margin-top: 10px">
+                                        <strong style="color: #ffd873"
+                                            >Đối với Ảnh Load Flowborn (Lưu ý
+                                            quan trọng):</strong
+                                        >
+                                        <ol class="faq-steps">
+                                            <li>
+                                                Chọn tab
+                                                <strong
+                                                    >Ảnh Load Flowborn</strong
+                                                >
+                                                ➔ Bấm
+                                                <strong
+                                                    >Chuyển tới trang
+                                                    game</strong
+                                                >.
+                                            </li>
+                                            <li>
+                                                <strong style="color: #ff0000"
+                                                    >Bắt buộc phải tạo một nhãn
+                                                    dán (Sticker) mới</strong
+                                                >
+                                                trên giao diện Flowborn trước.
+                                            </li>
+                                            <li>
+                                                Sau khi đã tạo nhãn dán xong,
+                                                tiến hành chạy đoạn
+                                                <strong
+                                                    >Code Inject
+                                                    (Bookmarklet)</strong
+                                                >
+                                                ➔ Nút tải ảnh sẽ hiển thị để bạn
+                                                đổi ảnh bình thường.
+                                            </li>
+                                        </ol>
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="faq-item">
                                 <button type="button" class="faq-question">
                                     <span
-                                        >2. Công cụ có thuộc Garena không & Có
-                                        an toàn không?</span
+                                        >2. Công cụ này có thuộc Garena không &
+                                        Tuyên bố bản quyền ra sao?</span
                                     >
                                     <svg
                                         class="faq-chevron"
@@ -496,17 +549,27 @@
                                 </button>
                                 <div class="faq-answer">
                                     <p>
-                                        <strong>Công cụ phi chính thức:</strong>
-                                        Dự án hoàn toàn độc lập, không thuộc
-                                        quản lý và không liên kết với Garena hay
-                                        Tencent/TiMi Studios.
+                                        <strong
+                                            >Tuyên bố sở hữu trí tuệ:</strong
+                                        >
+                                        Liên Quân Mobile, Arena of Valor và AOV
+                                        Camp là các thương hiệu và tài sản trí
+                                        tuệ thuộc quyền sở hữu của
+                                        <strong>Garena</strong> và
+                                        <strong
+                                            >Tencent Games / TiMi Studio
+                                            Group</strong
+                                        >.
                                     </p>
                                     <p style="margin-top: 6px">
-                                        <strong>Độ an toàn:</strong> Script chỉ
-                                        chạy phía trình duyệt (Client-side
-                                        Javascript), không can thiệp hay sửa đổi
-                                        bất kỳ tệp tin cài đặt APK/IPA nào của
-                                        game.
+                                        <strong>Dự án phi thương mại:</strong>
+                                        Đây là công cụ tiện ích cá nhân do
+                                        <strong>Honaki</strong> tự nghiên cứu và
+                                        phát triển độc lập nhằm hỗ trợ người
+                                        chơi, hoàn toàn không có mục đích thương
+                                        mại, không liên kết, không thuộc quyền
+                                        quản lý hay được ủy quyền bởi nhà phát
+                                        hành.
                                     </p>
                                 </div>
                             </div>
@@ -514,7 +577,48 @@
                             <div class="faq-item">
                                 <button type="button" class="faq-question">
                                     <span
-                                        >3. Web có lưu trữ Token hay thông tin
+                                        >3. Đổi ảnh load trận Liên Quân có an
+                                        toàn và có bị khóa nick không?</span
+                                    >
+                                    <svg
+                                        class="faq-chevron"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2.2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        aria-hidden="true"
+                                    >
+                                        <polyline
+                                            points="6 9 12 15 18 9"
+                                        ></polyline>
+                                    </svg>
+                                </button>
+                                <div class="faq-answer">
+                                    <p>
+                                        <strong style="color: #ff0000"
+                                            >Cảnh báo có rủi ro:</strong
+                                        >
+                                        Mặc dù đoạn mã Script chỉ thực thi cục
+                                        bộ trên trình duyệt (Client-side), hiện
+                                        tại nhà phát hành game đã bắt đầu áp
+                                        dụng các chính sách rà soát và có thể áp
+                                        dụng án phạt/khóa tài khoản đối với các
+                                        hành vi can thiệp tùy chỉnh ảnh poster.
+                                    </p>
+                                    <p style="margin-top: 6px">
+                                        Bạn nên cân nhắc kỹ trước khi trải
+                                        nghiệm và tự chịu trách nhiệm đối với
+                                        tài khoản game cá nhân của mình.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="faq-item">
+                                <button type="button" class="faq-question">
+                                    <span
+                                        >4. Web có lưu trữ Token hay thông tin
                                         tài khoản không?</span
                                     >
                                     <svg
