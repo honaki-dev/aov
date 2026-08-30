@@ -856,7 +856,7 @@ button {
 }
 
 .faq-item.active .faq-answer {
-    max-height: 800px;
+    max-height: 1200px;
     padding: 0 14px 14px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     padding-top: 10px;
