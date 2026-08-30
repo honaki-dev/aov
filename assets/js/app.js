@@ -328,18 +328,20 @@
                 if (!extractedUrl) {
                     resetHarDropzone();
                     showModal(
-                        "File HAR không chứa liên kết hợp lệ! Vui lòng chọn file HAR khác.",
+                        "File HAR không chứa liên kết hợp lệ của hệ thống AOV Camp. Vui lòng chọn file HAR khác.",
                         "error",
+                        "Lỗi File HAR",
                     );
                 }
             })
             .catch((err) => {
                 resetHarDropzone();
                 showModal(
-                    "Lỗi đọc file HAR: " +
+                    "Không thể đọc dữ liệu file: " +
                         err.message +
-                        ". Vui lòng chọn file khác.",
+                        ". Vui lòng kiểm tra lại file của bạn.",
                     "error",
+                    "Lỗi Đọc File",
                 );
             })
             .finally(() => {
@@ -385,7 +387,11 @@
             }
             const text = await navigator.clipboard.readText();
             if (!text || !text.trim()) {
-                showModal("Bộ nhớ tạm (Clipboard) đang rỗng.", "error");
+                showModal(
+                    "Bộ nhớ tạm (Clipboard) của bạn đang trống. Hãy sao chép đường link trước khi dán.",
+                    "error",
+                    "Bộ Nhớ Tạm Rỗng",
+                );
                 return;
             }
             const extracted = extractUrlFromText(text) || text.trim();
@@ -393,8 +399,9 @@
             playerUrl.focus();
         } catch (err) {
             showModal(
-                "Không thể tự dán (trình duyệt chặn quyền truy cập clipboard). Hãy nhấn giữ vào ô Link rồi chọn Dán, hoặc bấm Ctrl+V.",
+                "Trình duyệt đã chặn quyền truy cập bộ nhớ tạm. Hãy nhấn giữ vào ô nhập rồi chọn Dán, hoặc nhấn phím Ctrl + V.",
                 "error",
+                "Không Thể Dán Tự Động",
             );
             playerUrl.focus();
         }
@@ -412,9 +419,17 @@
     const modalCloseBtn = document.getElementById("modalCloseBtn");
     const modalCloseX = document.getElementById("modalCloseX");
 
-    function showModal(message, type = "error", title = "Chú ý") {
+    function showModal(message, type = "error", title = null) {
         if (modalTitle) {
-            modalTitle.textContent = type === "success" ? "Thông báo" : title;
+            if (title) {
+                modalTitle.textContent = title;
+            } else if (type === "error") {
+                modalTitle.textContent = "Lỗi";
+            } else if (type === "success") {
+                modalTitle.textContent = "Thành công";
+            } else {
+                modalTitle.textContent = "Chú ý";
+            }
         }
         if (modalMessage) modalMessage.textContent = message;
         modalOverlay.classList.add("show");
@@ -504,10 +519,30 @@
                 targetUrl = applyPosterTypeToUrl(targetUrl, posterType);
                 window.location.href = targetUrl;
             } else {
-                showModal(
-                    "Không tìm thấy link hợp lệ (chỉ hỗ trợ kgvn-camp.mobagarena.com)",
-                    "error",
-                );
+                if (inputMode === "har") {
+                    showModal(
+                        "Bạn chưa chọn hoặc chưa tải lên file HAR hợp lệ. Vui lòng kéo thả hoặc chọn file .har.",
+                        "error",
+                        "Chưa Chọn File HAR",
+                    );
+                } else {
+                    const urlText = document
+                        .getElementById("playerUrl")
+                        .value.trim();
+                    if (!urlText) {
+                        showModal(
+                            "Vui lòng nhập hoặc dán đường dẫn link CAMP để tiếp tục.",
+                            "error",
+                            "Thiếu Liên Kết",
+                        );
+                    } else {
+                        showModal(
+                            "Liên kết bạn vừa nhập không hợp lệ. Hệ thống chỉ hỗ trợ tên miền kgvn-camp.mobagarena.com.",
+                            "error",
+                            "Liên Kết Không Hợp Lệ",
+                        );
+                    }
+                }
             }
         });
 })();
