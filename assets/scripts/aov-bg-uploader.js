@@ -1,6 +1,6 @@
 // ================================================================
 //              [AOV Custom Background Uploader]
-//   Version: 0.0.5
+//   Version: 0.0.6
 //   Author: Honaki Tran (https://aov.honaki.site)
 //   GitHub: https://github.com/honaki-dev
 //   Contact: me@honaki.site
@@ -10,7 +10,7 @@
     "use strict";
 
     const CONFIG = {
-        VERSION: "0.0.5",
+        VERSION: "0.0.6",
         AUTHOR: "Honaki Tran",
         GITHUB: "https://github.com/honaki-dev",
         WEBSITE: "https://aov.honaki.site",
@@ -104,81 +104,335 @@
 
         root.innerHTML = `
             <style>
-                * { box-sizing: border-box; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
-                .overlay {
-                    position: fixed; inset: 0;
-                    background: rgba(6,7,12,0.82);
-                    display: flex; align-items: center; justify-content: center;
-                    padding: 20px;
+                * {
+                    box-sizing: border-box;
+                    margin: 0;
+                    padding: 0;
+                    -webkit-user-select: none !important;
+                    user-select: none !important;
+                    -webkit-touch-callout: none !important;
                 }
-                .box {
-                    width: 100%; max-width: 340px;
-                    background: #141726; border: 1px solid #2e3350;
-                    border-radius: 14px; padding: 18px;
-                    color: #f3efe4;
+                .adm-mask {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(0, 0, 0, 0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 16px;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
                 }
-                .title {
-                    font-size: 14px; font-weight: 700; margin-bottom: 12px; text-align: center;
+                .camp-game-model {
+                    position: relative;
+                    width: 100%;
+                    max-width: 360px;
+                    display: flex;
+                    justify-content: center;
+                }
+                .camp-game-model__container {
+                    background: linear-gradient(#333469 0%, #4d559d 100%);
+                    border: none;
+                    outline: none;
+                    border-radius: 4px;
+                    flex-direction: column;
+                    width: 100%;
+                    display: flex;
+                    position: relative;
+                    overflow: hidden;
+                    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+                }
+                .camp-game-model__close {
+                    cursor: pointer;
+                    z-index: 10;
+                    justify-content: center;
+                    align-items: center;
+                    display: flex;
+                    position: absolute;
+                    top: 11px;
+                    right: 14px;
+                    width: 20px;
+                    height: 20px;
+                }
+                .camp-game-model__close img {
+                    width: 20px;
+                    height: 20px;
+                    display: block;
+                    pointer-events: none;
+                }
+                .camp-game-model__header {
+                    color: #fae7bd;
+                    border-top: 1px solid #7d5f56;
+                    border-bottom: 1px solid #7d5f56;
+                    align-items: center;
+                    font-weight: 500;
+                    display: flex;
+                    position: relative;
+                    height: 42px;
+                    overflow: hidden;
+                }
+                .camp-game-model__header-bg {
+                    height: 100%;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    pointer-events: none;
+                }
+                .camp-game-model__header-bg img {
+                    height: 100%;
+                    display: block;
+                }
+                .camp-game-model__title {
+                    z-index: 1;
+                    color: #fae7bd;
+                    font-weight: 500;
+                    position: relative;
+                    font-size: 15px;
+                    margin-left: 16px;
+                    letter-spacing: 0.04em;
+                }
+                .camp-game-model__content {
+                    padding: 16px 18px 12px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    width: 100%;
                 }
                 .stage-wrap {
-                    width: 100%; max-width: 260px; margin: 0 auto;
+                    width: 100%;
+                    max-width: 260px;
+                    margin: 0 auto;
                     aspect-ratio: ${OUT_W} / ${OUT_H};
-                    background: #0a0c14; border-radius: 10px; overflow: hidden;
-                    position: relative; touch-action: none; cursor: grab;
+                    background: #0d0f1f;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    overflow: hidden;
+                    position: relative;
+                    touch-action: none;
+                    cursor: grab;
                 }
-                .stage-wrap.grabbing { cursor: grabbing; }
+                .stage-wrap.grabbing {
+                    cursor: grabbing;
+                }
                 .stage-img {
-                    position: absolute; top: 0; left: 0;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
                     transform-origin: 0 0;
-                    pointer-events: none; user-select: none;
+                    pointer-events: none;
+                    user-select: none;
                     will-change: transform;
                 }
                 .zoom-row {
-                    display: flex; align-items: center; gap: 8px; margin-top: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                    width: 100%;
+                    max-width: 260px;
+                    margin-top: 14px;
+                    height: 24px;
+                    user-select: none;
                 }
-                .zoom-row input[type=range] { flex: 1; accent-color: #f0b93f; }
-                .btn-row {
-                    display: flex; gap: 8px; margin-top: 16px;
+                .zoom-btn {
+                    all: unset;
+                    cursor: pointer;
+                    color: #fae7bd;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 4px;
+                    background: rgba(255, 255, 255, 0.08);
+                    transition: background 0.15s ease, transform 0.1s ease;
+                    flex-shrink: 0;
+                    box-sizing: border-box;
+                }
+                .zoom-btn:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                    color: #ffffff;
+                }
+                .zoom-btn:active {
+                    transform: scale(0.92);
+                }
+                .zoom-slider-wrap {
+                    flex: 1;
+                    display: flex;
+                    align-items: center;
+                    height: 24px;
+                }
+                .zoom-slider-wrap input[type=range] {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    width: 100%;
+                    height: 18px;
+                    background: transparent;
+                    border: none !important;
+                    outline: none !important;
+                    box-shadow: none !important;
+                    cursor: pointer;
+                    margin: 0;
+                    padding: 0;
+                    display: block;
+                }
+                .zoom-slider-wrap input[type=range]:focus {
+                    outline: none !important;
+                    box-shadow: none !important;
+                    border: none !important;
+                }
+                .zoom-slider-wrap input[type=range]::-webkit-slider-runnable-track {
+                    height: 4px;
+                    background: rgba(255, 255, 255, 0.22);
+                    border-radius: 999px;
+                    border: none;
+                    outline: none;
+                }
+                .zoom-slider-wrap input[type=range]::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    width: 14px;
+                    height: 14px;
+                    border-radius: 50%;
+                    background: linear-gradient(180deg, #ffe182 0%, #f0b93f 100%);
+                    border: 1.5px solid #ffffff;
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+                    cursor: pointer;
+                    margin-top: -5px;
+                    transition: transform 0.1s ease;
+                }
+                .zoom-slider-wrap input[type=range]::-webkit-slider-thumb:hover {
+                    transform: scale(1.2);
+                }
+                .zoom-slider-wrap input[type=range]::-moz-range-track {
+                    height: 4px;
+                    background: rgba(255, 255, 255, 0.22);
+                    border-radius: 999px;
+                    border: none;
+                }
+                .zoom-slider-wrap input[type=range]::-moz-range-thumb {
+                    width: 14px;
+                    height: 14px;
+                    border-radius: 50%;
+                    background: linear-gradient(180deg, #ffe182 0%, #f0b93f 100%);
+                    border: 1.5px solid #ffffff;
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+                    cursor: pointer;
+                    transition: transform 0.1s ease;
+                }
+                .zoom-slider-wrap input[type=range]::-moz-range-thumb:hover {
+                    transform: scale(1.2);
+                }
+                .camp-game-model__footer {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 0 18px 18px;
+                    gap: 10px;
                 }
                 button {
-                    flex: 1; border: none; border-radius: 8px; padding: 10px;
-                    font-size: 13px; font-weight: 600; cursor: pointer;
+                    font-family: inherit;
+                    cursor: pointer;
+                    border: none;
+                    border-radius: 4px;
+                    padding: 10px 14px;
+                    font-size: 13px;
+                    font-weight: 500;
+                    letter-spacing: 0.01em;
+                    text-align: center;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex: 1;
+                    box-sizing: border-box;
+                    user-select: none;
                 }
-                .btn-cancel { background: transparent; color: #96909e; border: 1px solid #2e3350; }
-                .btn-confirm { background: linear-gradient(180deg,#ffd873,#f0b93f); color: #241608; }
+                .btn-ghost {
+                    height: 38px;
+                    color: #ffffff;
+                    background:
+                        url(https://aov.honaki.site/assets/imgs/buttons/secondary-decorate.png) 50% / contain no-repeat,
+                        linear-gradient(#5867c0 0%, #7b9be6 100%);
+                    box-shadow: inset 0 1px #688cdb, inset 0 -2px #80abff;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+                }
+                .btn-ghost:hover { filter: brightness(1.06); }
+                .btn-ghost:active { filter: brightness(0.94); }
+
+                .btn-primary {
+                    height: 38px;
+                    color: #ffffff;
+                    background:
+                        url(https://aov.honaki.site/assets/imgs/buttons/primary-decorate.png) 50% / contain no-repeat,
+                        linear-gradient(#bf8357 0%, #dfb16d 100%);
+                    box-shadow: inset 0 1px #dca369, inset 0 -2px #ffcb78;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+                }
+                .btn-primary:hover { filter: brightness(1.06); }
+                .btn-primary:active { filter: brightness(0.94); }
             </style>
-            <div class="overlay">
-                <div class="box">
-                    <div class="title">Chỉnh ảnh nền</div>
-                    <div class="stage-wrap" id="stageWrap">
-                        <img class="stage-img" id="stageImg" />
-                    </div>
-                    <div class="zoom-row">
-                        <span style="color:#96909e;font-size:13px;">–</span>
-                        <input type="range" id="zoomSlider" min="1" max="4" step="0.01" value="1" />
-                        <span style="color:#96909e;font-size:13px;">+</span>
-                    </div>
-                    <div class="btn-row">
-                        <button class="btn-cancel" id="btnCancel">Huỷ</button>
-                        <button class="btn-confirm" id="btnConfirm">Dùng ảnh này</button>
+            <div class="adm-mask" id="admMask">
+                <div class="camp-game-model">
+                    <div class="camp-game-model__container">
+                        <div class="camp-game-model__close" id="btnModalClose">
+                            <img src="https://aov.honaki.site/assets/imgs/modal/close-icon.png" alt="Close" />
+                        </div>
+                        <div class="camp-game-model__header">
+                            <div class="camp-game-model__header-bg">
+                                <img src="https://aov.honaki.site/assets/imgs/modal/model-top-bg.png" alt="" />
+                            </div>
+                            <div class="camp-game-model__title">Chỉnh ảnh nền</div>
+                        </div>
+                        <div class="camp-game-model__content">
+                            <div class="stage-wrap" id="stageWrap">
+                                <img class="stage-img" id="stageImg" />
+                            </div>
+                            <div class="zoom-row">
+                                <button type="button" class="zoom-btn" id="zoomOutBtn" aria-label="Thu nhỏ">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                </button>
+                                <div class="zoom-slider-wrap">
+                                    <input type="range" id="zoomSlider" min="1" max="4" step="0.01" value="1" />
+                                </div>
+                                <button type="button" class="zoom-btn" id="zoomInBtn" aria-label="Phóng to">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="camp-game-model__footer">
+                            <button type="button" class="btn-ghost" id="btnCancel">Huỷ</button>
+                            <button type="button" class="btn-primary" id="btnConfirm">Dùng ảnh này</button>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
 
+        const admMask = root.getElementById("admMask");
+        const btnModalClose = root.getElementById("btnModalClose");
         const stageWrap = root.getElementById("stageWrap");
         const stageImg = root.getElementById("stageImg");
         const zoomSlider = root.getElementById("zoomSlider");
+        const zoomOutBtn = root.getElementById("zoomOutBtn");
+        const zoomInBtn = root.getElementById("zoomInBtn");
         const btnCancel = root.getElementById("btnCancel");
         const btnConfirm = root.getElementById("btnConfirm");
 
         function close() {
             window.removeEventListener("mousemove", onWindowMouseMove);
             window.removeEventListener("mouseup", onWindowMouseUp);
+            window.removeEventListener("keydown", onKeyDown);
             URL.revokeObjectURL(objectUrl);
             host.remove();
         }
+        function onKeyDown(e) {
+            if (e.key === "Escape") close();
+        }
+        window.addEventListener("keydown", onKeyDown);
         btnCancel.addEventListener("click", close);
+        btnModalClose.addEventListener("click", close);
+        admMask.addEventListener("click", (e) => {
+            if (e.target === admMask) close();
+        });
 
         const objectUrl = URL.createObjectURL(file);
         const img = new Image();
@@ -236,18 +490,36 @@
         };
         img.src = objectUrl;
 
-        zoomSlider.addEventListener("input", () => {
+        function applyZoom(newVal) {
+            const val = clamp(newVal, 1, 4);
+            zoomSlider.value = val;
             const cx = containerW / 2,
                 cy = containerH / 2;
             const imgX = (cx - tx) / scale;
             const imgY = (cy - ty) / scale;
-            zoomFactor = parseFloat(zoomSlider.value);
+            zoomFactor = val;
             scale = baseScale * zoomFactor;
             tx = cx - imgX * scale;
             ty = cy - imgY * scale;
             clampPosition();
             applyTransform();
+        }
+
+        zoomSlider.addEventListener("input", () => {
+            applyZoom(parseFloat(zoomSlider.value));
         });
+
+        if (zoomOutBtn) {
+            zoomOutBtn.addEventListener("click", () => {
+                applyZoom(parseFloat(zoomSlider.value) - 0.25);
+            });
+        }
+
+        if (zoomInBtn) {
+            zoomInBtn.addEventListener("click", () => {
+                applyZoom(parseFloat(zoomSlider.value) + 0.25);
+            });
+        }
 
         function startDrag(x, y) {
             dragging = true;
@@ -294,29 +566,32 @@
         stageWrap.addEventListener("touchend", endDrag);
 
         btnConfirm.addEventListener("click", () => {
-            const canvas = document.createElement("canvas");
-            canvas.width = OUT_W;
-            canvas.height = OUT_H;
-            const ctx = canvas.getContext("2d");
-            const sx = -tx / scale;
-            const sy = -ty / scale;
-            const sW = containerW / scale;
-            const sH = containerH / scale;
-            ctx.drawImage(img, sx, sy, sW, sH, 0, 0, OUT_W, OUT_H);
-            canvas.toBlob(
-                (blob) => {
-                    if (blob) onConfirm(blob);
-                    close();
-                },
-                "image/jpeg",
-                0.95,
-            );
+            try {
+                const canvas = document.createElement("canvas");
+                canvas.width = OUT_W;
+                canvas.height = OUT_H;
+                const ctx = canvas.getContext("2d");
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = "high";
+                const sx = -tx / scale;
+                const sy = -ty / scale;
+                const sW = containerW / scale;
+                const sH = containerH / scale;
+                ctx.drawImage(img, sx, sy, sW, sH, 0, 0, OUT_W, OUT_H);
+
+                const dataUrl = canvas.toDataURL("image/jpeg", 1.0);
+                if (onConfirm) onConfirm(dataUrl);
+            } catch (err) {
+                console.error("[AOV BG Uploader] Crop error:", err);
+            } finally {
+                close();
+            }
         });
     }
 
     let lastAppliedObjectUrl = null;
 
-    function applyBackgroundImage(blob) {
+    function applyBackgroundImage(imageInput) {
         const bgImg = findBackgroundImgEl();
         if (!bgImg) {
             alert("Không tìm thấy layer ảnh nền, thử lại sau.");
@@ -324,7 +599,8 @@
         }
 
         const layerBox = findBackgroundLayerBox();
-        const newUrl = URL.createObjectURL(blob);
+        const isString = typeof imageInput === "string";
+        const newUrl = isString ? imageInput : URL.createObjectURL(imageInput);
 
         if (layerBox) {
             const w = layerBox.offsetWidth;
@@ -345,10 +621,12 @@
         bgImg.removeAttribute("sizes");
         bgImg.src = newUrl;
 
-        if (lastAppliedObjectUrl && lastAppliedObjectUrl !== newUrl) {
-            URL.revokeObjectURL(lastAppliedObjectUrl);
+        if (!isString) {
+            if (lastAppliedObjectUrl && lastAppliedObjectUrl !== newUrl) {
+                URL.revokeObjectURL(lastAppliedObjectUrl);
+            }
+            lastAppliedObjectUrl = newUrl;
         }
-        lastAppliedObjectUrl = newUrl;
 
         return true;
     }
