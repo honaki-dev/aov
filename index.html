@@ -3,12 +3,6 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta
-            http-equiv="Cache-Control"
-            content="no-cache, no-store, must-revalidate, max-age=0"
-        />
-        <meta http-equiv="Pragma" content="no-cache" />
-        <meta http-equiv="Expires" content="0" />
         <title>
             Đổi Ảnh Load Trận Liên Quân Mobile Online | AOV Poster Tool
         </title>
@@ -152,6 +146,8 @@
             <img
                 src="assets/imgs/background/left-mask.webp"
                 alt=""
+                width="320"
+                height="258"
                 draggable="false"
                 decoding="async"
                 class="bodyMaskLeft"
@@ -159,13 +155,18 @@
             <img
                 src="assets/imgs/background/middle-mask.webp"
                 alt=""
+                width="454"
+                height="393"
                 draggable="false"
+                fetchpriority="high"
                 decoding="async"
                 class="bodyMaskMiddle"
             />
             <img
                 src="assets/imgs/background/right-mask.webp"
                 alt=""
+                width="300"
+                height="240"
                 draggable="false"
                 decoding="async"
                 class="bodyMaskRight"
@@ -177,6 +178,8 @@
                 <img
                     src="assets/imgs/background/mask-top-left.webp"
                     alt=""
+                    width="440"
+                    height="440"
                     draggable="false"
                     decoding="async"
                 />
@@ -185,6 +188,8 @@
                 <img
                     src="assets/imgs/background/mask-bottom-right.webp"
                     alt=""
+                    width="440"
+                    height="440"
                     draggable="false"
                     decoding="async"
                 />
@@ -218,6 +223,8 @@
                             >
                                 <img
                                     src="assets/imgs/modal/model-top-bg.webp"
+                                    width="165"
+                                    height="40"
                                     draggable="false"
                                     decoding="async"
                                     class="tica-image-img"
@@ -245,7 +252,7 @@
             </div>
         </div>
 
-        <div class="app-container">
+        <main class="app-container">
             <div class="app-card">
                 <div class="camp-with-title">
                     <div class="camp-with-title__title">Xác Thực Tài Khoản</div>
@@ -552,13 +559,10 @@
                     >Honaki</a
                 >
             </div>
-        </div>
+        </main>
 
+        <script src="assets/js/app.js?v=1.0.0"></script>
         <script>
-            const s = document.createElement("script");
-            s.src = "assets/js/app.js?t=" + Date.now();
-            document.body.appendChild(s);
-
             document.addEventListener("DOMContentLoaded", () => {
                 const faqItems = document.querySelectorAll(".faq-item");
                 faqItems.forEach((item) => {

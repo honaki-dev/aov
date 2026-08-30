@@ -438,10 +438,12 @@
             }
         }
         if (modalMessage) modalMessage.textContent = message;
+        modalOverlay.removeAttribute("aria-hidden");
         modalOverlay.classList.add("show");
     }
 
     function closeModal() {
+        modalOverlay.setAttribute("aria-hidden", "true");
         modalOverlay.classList.remove("show");
     }
 
