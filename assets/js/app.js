@@ -465,7 +465,7 @@
 
     if (copyBtn) {
         copyBtn.addEventListener("click", function () {
-            const injectCode = `javascript:(function(){const s=document.createElement("script");s.src="https://aov.honaki.site/assets/scripts/aov-bg-uploader.min.js?t="+Date.now();document.head.appendChild(s);})();`;
+            const injectCode = `javascript:(function(){const s=document.createElement("script");s.src="https://pj.honaki.is-a.dev/aov/assets/scripts/aov-bg-uploader.min.js?t="+Date.now();document.head.appendChild(s);})();`;
 
             function onCopySuccess() {
                 clearTimeout(copyTimeout);

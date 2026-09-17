@@ -1,19 +1,20 @@
 // ================================================================
 //              [AOV Custom Background Uploader]
-//   Version: 0.0.6
-//   Author: Honaki Tran (https://aov.honaki.site)
+//   Version: 0.0.7
+//   Author: Honaki Tran (https://honaki-dev.github.io/aov/)
 //   GitHub: https://github.com/honaki-dev
-//   Contact: me@honaki.site
+//   Contact: hi@honaki.is-a.dev
 // ================================================================
-
 (function () {
     "use strict";
 
+    console.clear();
+
     const CONFIG = {
-        VERSION: "0.0.6",
+        VERSION: "0.0.7",
         AUTHOR: "Honaki Tran",
         GITHUB: "https://github.com/honaki-dev",
-        WEBSITE: "https://aov.honaki.site",
+        WEBSITE: "https://honaki.is-a.dev",
     };
 
     console.log("[AOV BG Uploader] Loaded!");
@@ -21,6 +22,9 @@
     console.log(`%c👨‍💻 Author: ${CONFIG.AUTHOR}`, "color:#96909e;");
     console.log(`%c🔗 GitHub: ${CONFIG.GITHUB}`, "color:#4ade80;");
     console.log(`%c🔗 Website: ${CONFIG.WEBSITE}`, "color:#4ade80;");
+
+    if (window.__AOV_SCRIPT_ATTACHED) return;
+    window.__AOV_SCRIPT_ATTACHED = true;
 
     const nowLocation = window.location.pathname
         .replace("/app/", "")
@@ -350,7 +354,7 @@
                     height: 38px;
                     color: #ffffff;
                     background:
-                        url(https://aov.honaki.site/assets/imgs/buttons/secondary-decorate.webp) 50% / contain no-repeat,
+                        url(https://honaki-dev.github.io/aov/assets/imgs/buttons/secondary-decorate.webp) 50% / contain no-repeat,
                         linear-gradient(#5867c0 0%, #7b9be6 100%);
                     box-shadow: inset 0 1px #688cdb, inset 0 -2px #80abff;
                     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -362,23 +366,23 @@
                     height: 38px;
                     color: #ffffff;
                     background:
-                        url(https://aov.honaki.site/assets/imgs/buttons/primary-decorate.webp) 50% / contain no-repeat,
+                        url(https://honaki-dev.github.io/aov/assets/imgs/buttons/primary-decorate.webp) 50% / contain no-repeat,
                         linear-gradient(#bf8357 0%, #dfb16d 100%);
                     box-shadow: inset 0 1px #dca369, inset 0 -2px #ffcb78;
                     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
                 }
                 .btn-primary:hover { filter: brightness(1.06); }
-                .btn-primary:active { filter: brightness(0.94); }
+                .btn-primary:active, .btn-primary--progressing { filter: brightness(0.94); }
             </style>
             <div class="adm-mask" id="admMask">
                 <div class="camp-game-model">
                     <div class="camp-game-model__container">
                         <div class="camp-game-model__close" id="btnModalClose">
-                            <img src="https://aov.honaki.site/assets/imgs/modal/close-icon.webp" alt="Close" />
+                            <img src="https://honaki-dev.github.io/aov/assets/imgs/modal/close-icon.webp" alt="Close" />
                         </div>
                         <div class="camp-game-model__header">
                             <div class="camp-game-model__header-bg">
-                                <img src="https://aov.honaki.site/assets/imgs/modal/model-top-bg.webp" alt="" />
+                                <img src="https://honaki-dev.github.io/aov/assets/imgs/modal/model-top-bg.webp" alt="" />
                             </div>
                             <div class="camp-game-model__title">Chỉnh ảnh nền</div>
                         </div>
@@ -417,6 +421,9 @@
         const btnCancel = root.getElementById("btnCancel");
         const btnConfirm = root.getElementById("btnConfirm");
 
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+
         function close() {
             window.removeEventListener("mousemove", onWindowMouseMove);
             window.removeEventListener("mouseup", onWindowMouseUp);
@@ -424,18 +431,17 @@
             URL.revokeObjectURL(objectUrl);
             host.remove();
         }
+
         function onKeyDown(e) {
             if (e.key === "Escape") close();
         }
+
         window.addEventListener("keydown", onKeyDown);
         btnCancel.addEventListener("click", close);
         btnModalClose.addEventListener("click", close);
         admMask.addEventListener("click", (e) => {
             if (e.target === admMask) close();
         });
-
-        const objectUrl = URL.createObjectURL(file);
-        const img = new Image();
 
         let naturalW = 0,
             naturalH = 0;
@@ -565,7 +571,13 @@
         );
         stageWrap.addEventListener("touchend", endDrag);
 
+        let progressing = false;
+
         btnConfirm.addEventListener("click", () => {
+            if (progressing) return;
+            btnConfirm.classList.add("btn-primary--progressing");
+            progressing = true;
+
             try {
                 const canvas = document.createElement("canvas");
                 canvas.width = OUT_W;
@@ -579,19 +591,49 @@
                 const sH = containerH / scale;
                 ctx.drawImage(img, sx, sy, sW, sH, 0, 0, OUT_W, OUT_H);
 
-                const dataUrl = canvas.toDataURL("image/jpeg", 1.0);
-                if (onConfirm) onConfirm(dataUrl);
+                canvas.toBlob(
+                    (blob) => {
+                        if (!blob) {
+                            progressing = false;
+                            btnConfirm.classList.remove(
+                                "btn-primary--progressing",
+                            );
+                            console.log(
+                                "[AOV BG Uploader] Cannot create blob from image.",
+                            );
+                            return close();
+                        }
+
+                        try {
+                            if (onConfirm) onConfirm(blob);
+                        } catch (err) {
+                            console.error(
+                                "[AOV BG Uploader] onConfirm error:",
+                                err,
+                            );
+                            progressing = false;
+                            btnConfirm.classList.remove(
+                                "btn-primary--progressing",
+                            );
+                        } finally {
+                            close();
+                        }
+                    },
+                    "image/jpeg",
+                    0.92,
+                );
             } catch (err) {
                 console.error("[AOV BG Uploader] Crop error:", err);
-            } finally {
-                close();
+                progressing = false;
+                btnConfirm.classList.remove("btn-primary--progressing");
+                return close();
             }
         });
     }
 
     let lastAppliedObjectUrl = null;
 
-    function applyBackgroundImage(imageInput) {
+    function applyBackgroundImage(blob) {
         const bgImg = findBackgroundImgEl();
         if (!bgImg) {
             alert("Không tìm thấy layer ảnh nền, thử lại sau.");
@@ -599,8 +641,6 @@
         }
 
         const layerBox = findBackgroundLayerBox();
-        const isString = typeof imageInput === "string";
-        const newUrl = isString ? imageInput : URL.createObjectURL(imageInput);
 
         if (layerBox) {
             const w = layerBox.offsetWidth;
@@ -617,16 +657,16 @@
             bgImg.style.left = "0";
         }
 
+        if (lastAppliedObjectUrl) {
+            URL.revokeObjectURL(lastAppliedObjectUrl);
+        }
+
+        const newUrl = URL.createObjectURL(blob);
+        lastAppliedObjectUrl = newUrl;
+
         bgImg.removeAttribute("srcset");
         bgImg.removeAttribute("sizes");
         bgImg.src = newUrl;
-
-        if (!isString) {
-            if (lastAppliedObjectUrl && lastAppliedObjectUrl !== newUrl) {
-                URL.revokeObjectURL(lastAppliedObjectUrl);
-            }
-            lastAppliedObjectUrl = newUrl;
-        }
 
         return true;
     }
@@ -679,12 +719,11 @@
         grid.insertBefore(tile, grid.firstChild);
     }
 
-    injectUploadTile();
+    let bodyObserver = null,
+        gridObserver = null;
 
-    document.addEventListener("click", (e) => {
-        const tile = e.target.closest(
-            ".camp-grid-list__item, [dt-eid='yuan_edit_background']",
-        );
+    function handleClick(e) {
+        const tile = e.target.closest(".camp-grid-list__item");
         if (
             !tile ||
             tile.hasAttribute("data-aov-upload-tile") ||
@@ -698,6 +737,7 @@
         }
 
         const thumbImg = tile.querySelector("img");
+
         if (thumbImg && thumbImg.src) {
             const bgImg = findBackgroundImgEl();
             if (bgImg) {
@@ -705,40 +745,70 @@
                 bgImg.src = fullSrc;
             }
         }
-    });
+    }
 
-    new MutationObserver(() => {
-        injectUploadTile();
-    }).observe(document.body, {
-        childList: true,
-        subtree: true,
-    });
+    function startWatchingBody() {
+        if (bodyObserver) return;
+        bodyObserver = new MutationObserver(() => {
+            const grid = document.querySelector(".camp-grid-list");
+            if (grid) {
+                injectUploadTile();
 
-    function uploadFunction() {
-        const uploadTile = document.querySelector("[data-aov-upload-tile]");
-        if (uploadTile) {
-            uploadTile.click();
+                bodyObserver.disconnect();
+                bodyObserver = null;
+
+                startWatchingGrid(grid);
+            }
+        });
+        bodyObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+        });
+    }
+
+    function startWatchingGrid(grid) {
+        if (gridObserver) return;
+
+        if (!grid.dataset.__AOV_ATTACHED) {
+            grid.addEventListener("click", handleClick);
+            grid.dataset.__AOV_ATTACHED = true;
+        }
+
+        gridObserver = new MutationObserver(() => {
+            if (!document.body.contains(grid)) {
+                grid.removeEventListener("click", handleClick);
+                delete grid.dataset.__AOV_ATTACHED;
+
+                gridObserver.disconnect();
+                gridObserver = null;
+
+                startWatchingBody();
+
+                return;
+            }
+            const tile = grid.querySelector("[data-aov-upload-tile]");
+            if (!tile) {
+                injectUploadTile();
+            }
+        });
+        gridObserver.observe(grid, { childList: true });
+    }
+
+    function init() {
+        const existingGrid = document.querySelector(".camp-grid-list");
+        if (existingGrid) {
+            injectUploadTile();
+            startWatchingGrid(existingGrid);
         } else {
-            const tempInput = document.createElement("input");
-            tempInput.type = "file";
-            tempInput.accept = "image/*";
-            tempInput.style.display = "none";
-            tempInput.onchange = (e) => {
-                const file = e.target.files && e.target.files[0];
-                if (file) openCropModal(file, applyBackgroundImage);
-                tempInput.remove();
-            };
-            document.body.appendChild(tempInput);
-            tempInput.click();
+            startWatchingBody();
         }
     }
+
+    init();
+
     window.__AOV = {
-        upload: uploadFunction,
         version: CONFIG.VERSION,
         author: CONFIG.AUTHOR,
         github: CONFIG.GITHUB,
     };
-
-    console.log("[AOV BG Uploader] Commands:");
-    console.log("> __AOV.upload() -> mở upload");
 })();
